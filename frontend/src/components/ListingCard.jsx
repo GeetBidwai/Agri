@@ -1,20 +1,55 @@
-function ListingCard({ item }) {
+function ListingCard({ item, onNavigateToContact, language }) {
+  const listingType = item.listing_type || item.type?.toUpperCase();
+  const isTrusted = item.is_verified || item.verified;
+
+  const text = language === "HI"
+    ? {
+        forSale: "बिक्री के लिए",
+        wanted: "जरूरत है",
+        verified: "सत्यापित",
+        verifiedListing: "सत्यापित लिस्टिंग",
+        qty: "मात्रा",
+        location: "स्थान",
+        date: "तारीख",
+        recentlyAdded: "अभी जोड़ी गई",
+        warning: "अग्रिम भुगतान न करें",
+        report: "रिपोर्ट करें",
+        viewContact: "संपर्क देखें",
+        notSpecified: "उल्लेख नहीं",
+      }
+    : {
+        forSale: "FOR SALE",
+        wanted: "WANTED",
+        verified: "Verified",
+        verifiedListing: "Verified listing",
+        qty: "Qty",
+        location: "Location",
+        date: "Date",
+        recentlyAdded: "Recently added",
+        warning: "Do not pay advance",
+        report: "Report",
+        viewContact: "View Contact",
+        notSpecified: "Not specified",
+      };
+
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-5 hover:shadow-md transition-all">
-      
       <span className={`text-xs font-bold px-2 py-1 rounded-full ${
-        item.type === "sell"
+        listingType === "SELL"
           ? "bg-green-50 text-green-600"
           : "bg-amber-50 text-amber-600"
       }`}>
-        {item.type === "sell" ? "FOR SALE" : "WANTED"}
+        {listingType === "SELL" ? text.forSale : text.wanted}
       </span>
 
-      <h3 className="mt-2 font-bold text-lg">
-        {item.name}{" "}
-        <span className="text-gray-400 font-devanagari text-sm">
-          {item.hindi}
+      {isTrusted && (
+        <span className="ml-2 inline-block rounded-full bg-teal-50 px-2 py-1 text-xs font-semibold text-teal-700">
+          {text.verified}
         </span>
+      )}
+
+      <h3 className="mt-2 font-bold text-lg">
+        {item.name} <span className="text-gray-400 text-sm">{item.hindi}</span>
       </h3>
 
       <p className="text-sm text-gray-500">{item.variety}</p>
@@ -24,22 +59,39 @@ function ListingCard({ item }) {
       </h2>
 
       <div className="text-xs text-gray-400 mt-2 space-y-1">
-        <p>📦 {item.qty}</p>
-        <p>📍 {item.location}</p>
-        <p>🕒 {item.date}</p>
+        <p>{text.qty}: {item.qty || item.quantity || text.notSpecified}</p>
+        <p>{text.location}: {item.location}</p>
+        <p>{text.date}: {item.date || text.recentlyAdded}</p>
       </div>
 
       <div className="mt-3 pt-3 border-t flex justify-between items-center">
         <div>
-          <p className="text-xs font-semibold">{item.seller}</p>
-          {item.verified && (
-            <p className="text-xs text-teal-600">✓ KYC Verified</p>
+          <p className="text-xs font-semibold">{item.username || item.seller}</p>
+          {isTrusted && (
+            <p className="text-xs text-teal-600">{text.verifiedListing}</p>
           )}
+          <p className="mt-1 text-xs text-amber-700">
+            {text.warning}
+          </p>
         </div>
 
-        <button className="bg-green-400 text-white px-3 py-1 rounded-lg text-xs">
-          View Contact
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => alert("Report feature will be connected soon.")}
+            className="border border-red-200 bg-red-50 px-3 py-1 rounded-lg text-xs text-red-600"
+          >
+            {text.report}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onNavigateToContact(item.id)}
+            className="bg-green-400 text-white px-3 py-1 rounded-lg text-xs"
+          >
+            {text.viewContact}
+          </button>
+        </div>
       </div>
     </div>
   );
