@@ -3,7 +3,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 
-from .models import Product
+from .models import Product, UserProfile
 from .serializers import ProductSerializer, ProductContactSerializer
 
 
@@ -36,6 +36,7 @@ def get_products(request):
 
         payload = request.data.copy()
         listing_type = payload.get('listing_type')
+        phone = str(payload.get('phone', '')).strip()
 
         # Keep old and new fields in sync so existing UI logic continues to work
         if listing_type:
@@ -44,6 +45,13 @@ def get_products(request):
         elif payload.get('type'):
             payload['listing_type'] = str(payload['type']).upper()
 
+        # Save contact phone on the user's profile so View Contact can show it later
+        if phone:
+            profile, _ = UserProfile.objects.get_or_create(user=request.user)
+            profile.phone = phone
+            profile.save(update_fields=['phone'])
+
+        payload.pop('phone', None)
         payload['user'] = request.user.id
         serializer = ProductSerializer(data=payload)
         if serializer.is_valid():

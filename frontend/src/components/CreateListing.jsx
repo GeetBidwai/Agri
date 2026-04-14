@@ -13,6 +13,7 @@ function CreateListing({ initialListingType = "SELL", setListings, refreshListin
     price_per_kg: "",
     location: "",
     seller: "",
+    phone: "",
     verified: false,
   });
 
@@ -47,9 +48,10 @@ function CreateListing({ initialListingType = "SELL", setListings, refreshListin
         price: "Price per kg",
         location: "Location",
         seller: "Seller Name",
+        phone: "Contact Phone",
         submit: "Submit",
         submitting: "Submitting...",
-        validation: "Please fill required fields (name, price, location)",
+        validation: "Please fill required fields (name, price, location, phone)",
         created: "Listing created!",
         error: "Something went wrong!",
       };
@@ -78,7 +80,7 @@ function CreateListing({ initialListingType = "SELL", setListings, refreshListin
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (!form.name || !form.price_per_kg || !form.location) {
+    if (!form.name || !form.price_per_kg || !form.location || !form.phone) {
       alert(text.validation);
       return;
     }
@@ -105,6 +107,7 @@ function CreateListing({ initialListingType = "SELL", setListings, refreshListin
           price_per_kg: "",
           location: "",
           seller: "",
+          phone: "",
           verified: false,
         });
 
@@ -155,6 +158,7 @@ function CreateListing({ initialListingType = "SELL", setListings, refreshListin
         <input name="price_per_kg" value={form.price_per_kg} placeholder={text.price} onChange={handleChange} className="w-full p-2 border rounded" />
         <input name="location" value={form.location} placeholder={text.location} onChange={handleChange} className="w-full p-2 border rounded" />
         <input name="seller" value={form.seller} placeholder={text.seller} onChange={handleChange} className="w-full p-2 border rounded" />
+        <input name="phone" value={form.phone} placeholder={text.phone} onChange={handleChange} className="w-full p-2 border rounded" />
 
         <button
           disabled={loading}

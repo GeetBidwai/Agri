@@ -10,6 +10,7 @@ import AppBanner from "./components/AppBanner";
 import CreateListing from "./components/CreateListing";
 import AuthPage from "./components/AuthPage";
 import ContactsPage from "./components/ContactsPage";
+import ProfilePage from "./components/ProfilePage";
 
 const getRouteFromHash = () => {
   const hash = window.location.hash || "#/";
@@ -20,6 +21,10 @@ const getRouteFromHash = () => {
 
   if (hash === "#/signup") {
     return { page: "signup" };
+  }
+
+  if (hash === "#/profile") {
+    return { page: "profile" };
   }
 
   if (hash === "#/create" || hash === "#/create/sell") {
@@ -68,6 +73,7 @@ function App() {
       sell: "#/sell",
       login: "#/login",
       signup: "#/signup",
+      profile: "#/profile",
       create: "#/create/sell",
     };
 
@@ -102,8 +108,8 @@ function App() {
     const handleHashChange = () => {
       const nextRoute = getRouteFromHash();
 
-      // Protect create route without adding a router dependency
-      if (nextRoute.page === "create" && !localStorage.getItem("authToken")) {
+      // Protect authenticated routes without adding a router dependency
+      if ((nextRoute.page === "create" || nextRoute.page === "profile") && !localStorage.getItem("authToken")) {
         window.location.hash = "#/login";
         return;
       }
@@ -190,6 +196,10 @@ function App() {
             />
           </div>
         </section>
+      )}
+
+      {route.page === "profile" && (
+        <ProfilePage language={language} />
       )}
 
       {route.page === "contacts" && (

@@ -2,10 +2,10 @@ from django.contrib.auth import authenticate, get_user_model
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from .models import UserProfile
+from .models import Product, UserProfile
 
 
 User = get_user_model()
@@ -71,5 +71,20 @@ def login(request):
                 "username": user.username,
                 "phone": profile.phone,
             },
+        }
+    )
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def me(request):
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+
+    return Response(
+        {
+            "id": request.user.id,
+            "username": request.user.username,
+            "phone": profile.phone,
+            "listing_count": Product.objects.filter(user=request.user).count(),
         }
     )
