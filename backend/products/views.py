@@ -8,7 +8,13 @@ def get_products(request):
     
     # GET → fetch data
     if request.method == 'GET':
+        search_query = request.GET.get('search', '').strip()
         products = Product.objects.all().order_by('-created_at')
+
+        # Optional search keeps the old response unchanged when query is empty
+        if search_query:
+            products = products.filter(name__icontains=search_query)
+
         serializer = ProductSerializer(products, many=True)
         return Response(serializer.data)
 

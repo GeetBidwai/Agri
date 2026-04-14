@@ -1,4 +1,4 @@
-function Hero() {
+function Hero({ searchQuery, setSearchQuery }) {
   return (
     <section className="bg-gradient-to-r from-green-800 via-green-600 to-teal-600 text-white py-20 px-6">
       
@@ -40,6 +40,8 @@ function Hero() {
           <input
             type="text"
             placeholder="Search commodities (e.g. Wheat, Rice)"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             className="flex-1 p-3 text-gray-700 outline-none"
           />
 

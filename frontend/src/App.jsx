@@ -11,18 +11,23 @@ import CreateListing from "./components/CreateListing";
 
 function App() {
   const [listings, setListings] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  // Fetch data once
+  // Refetch listings whenever the search query changes
   useEffect(() => {
-    axios.get("http://127.0.0.1:8000/api/products/")
+    axios.get("http://127.0.0.1:8000/api/products/", {
+      params: {
+        search: searchQuery,
+      },
+    })
       .then((res) => setListings(res.data))
       .catch((err) => console.error(err));
-  }, []);
+  }, [searchQuery]);
 
   return (
     <div>
       <Navbar />
-      <Hero />
+      <Hero searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
       <CategoryGrid />
 
       {/* 🔥 connect form */}
