@@ -44,6 +44,7 @@ class Product(models.Model):
     price_per_kg = models.CharField(max_length=20)
     location = models.CharField(max_length=100)
     seller = models.CharField(max_length=100)
+    category = models.CharField(max_length=50, blank=True, null=True)
     image = models.ImageField(upload_to='products/', null=True, blank=True)
     verified = models.BooleanField(default=False)
     is_verified = models.BooleanField(default=False)

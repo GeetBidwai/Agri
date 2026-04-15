@@ -1,13 +1,13 @@
-function CategoryGrid({ language }) {
+function CategoryGrid({ onNavigate, language }) {
   const categories = [
-    { en: "Grains", hi: "अनाज", icon: "🌾", count: 1240 },
-    { en: "Pulses", hi: "दालें", icon: "🫘", count: 870 },
-    { en: "Spices", hi: "मसाले", icon: "🌶️", count: 620 },
-    { en: "Oilseeds", hi: "तिलहन", icon: "🌻", count: 490 },
-    { en: "Vegetables", hi: "सब्जियां", icon: "🥦", count: 380 },
-    { en: "Fruits", hi: "फल", icon: "🍊", count: 310 },
-    { en: "Cotton", hi: "कपास", icon: "🌿", count: 215 },
-    { en: "Sugar", hi: "चीनी", icon: "🍬", count: 178 },
+    { en: "Grains", hi: "अनाज", icon: "🌾", count: 1240, slug: "grains" },
+    { en: "Pulses", hi: "दालें", icon: "🫘", count: 870, slug: "pulses" },
+    { en: "Spices", hi: "मसाले", icon: "🌶️", count: 620, slug: "spices" },
+    { en: "Oilseeds", hi: "तिलहन", icon: "🌻", count: 490, slug: "oilseeds" },
+    { en: "Vegetables", hi: "सब्जियां", icon: "🥦", count: 380, slug: "vegetables" },
+    { en: "Fruits", hi: "फल", icon: "🍊", count: 310, slug: "fruits" },
+    { en: "Cotton", hi: "कपास", icon: "🌿", count: 215, slug: "cotton" },
+    { en: "Sugar", hi: "चीनी", icon: "🍬", count: 178, slug: "sugar" },
   ];
 
   const text = language === "HI"
@@ -32,6 +32,7 @@ function CategoryGrid({ language }) {
           {categories.map((cat, index) => (
             <div
               key={index}
+              onClick={() => onNavigate(cat.slug)}
               className="border border-gray-200 rounded-xl p-5 text-center cursor-pointer hover:shadow-md hover:border-green-200 transition-all"
             >
               <div className="text-3xl mb-2">{cat.icon}</div>

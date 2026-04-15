@@ -13,6 +13,7 @@ def get_products(request):
     if request.method == 'GET':
         search_query = request.GET.get('search', '').strip()
         listing_type = request.GET.get('type', '').strip().upper()
+        category_query = request.GET.get('category', '').strip()
         products = Product.objects.all().order_by('-created_at')
 
         # Optional search keeps the old response unchanged when query is empty
@@ -22,6 +23,10 @@ def get_products(request):
         # Optional type filter keeps the old response unchanged when no filter is sent
         if listing_type in {'BUY', 'SELL'}:
             products = products.filter(listing_type=listing_type)
+
+        # Optional category filter
+        if category_query:
+            products = products.filter(category__iexact=category_query)
 
         serializer = ProductSerializer(products, many=True)
         return Response(serializer.data)

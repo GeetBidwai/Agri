@@ -14,6 +14,7 @@ import ProfilePage from "./components/ProfilePage";
 import MandiPrices from "./pages/MandiPrices";
 import BidModal from "./components/BidModal";
 import ProductBidsPage from "./pages/ProductBidsPage";
+import CategoryPage from "./pages/CategoryPage";
 
 const getRouteFromHash = () => {
   const hash = window.location.hash || "#/";
@@ -32,6 +33,13 @@ const getRouteFromHash = () => {
 
   if (hash === "#/mandi-prices") {
     return { page: "mandi-prices" };
+  }
+
+  if (hash.startsWith("#/category/")) {
+    return {
+      page: "category",
+      categoryName: hash.replace("#/category/", ""),
+    };
   }
 
   if (hash.startsWith("#/product-bids/")) {
@@ -106,6 +114,11 @@ function App() {
 
     if (nextRoute === "product-bids") {
       window.location.hash = `#/product-bids/${value}`;
+      return;
+    }
+
+    if (nextRoute === "category") {
+      window.location.hash = `#/category/${value}`;
       return;
     }
 
@@ -238,6 +251,15 @@ function App() {
         <MandiPrices language={language} />
       )}
 
+      {route.page === "category" && (
+        <CategoryPage
+          categoryName={route.categoryName}
+          onNavigateToContact={(productId) => navigate("contacts", productId)}
+          onPlaceBid={handlePlaceBid}
+          language={language}
+        />
+      )}
+
       {route.page === "product-bids" && (
         <ProductBidsPage
           productId={route.productId}
@@ -259,7 +281,10 @@ function App() {
       {route.page === "home" && (
         <>
           <Hero searchQuery={searchQuery} setSearchQuery={setSearchQuery} language={language} />
-          <CategoryGrid language={language} />
+          <CategoryGrid
+            onNavigate={(category) => navigate("category", category)}
+            language={language}
+          />
           <LatestListings
             listings={listings}
             activeListingType={activeListingType}

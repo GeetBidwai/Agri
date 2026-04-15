@@ -20,6 +20,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'price_per_kg',
             'location',
             'seller',
+            'category',
             'image',
             'verified',
             'is_verified',
