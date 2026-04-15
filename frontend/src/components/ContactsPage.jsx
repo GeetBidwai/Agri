@@ -44,7 +44,6 @@ function ContactsPage({ productId, listing, onNavigate, language }) {
       };
 
   useEffect(() => {
-    setLoading(true);
     api.get(`/products/${productId}/contact/`)
       .then((res) => setContact(res.data))
       .catch((err) => {

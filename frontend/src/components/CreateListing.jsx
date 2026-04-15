@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import api from "../api";
 
@@ -59,15 +59,6 @@ function CreateListing({ initialListingType = "SELL", setListings, refreshListin
         created: "Listing created!",
         error: "Something went wrong!",
       };
-
-  useEffect(() => {
-    console.log("Setting form from initialListingType:", initialListingType);
-    setForm((prev) => ({
-      ...prev,
-      listing_type: initialListingType,
-      type: initialListingType.toLowerCase(),
-    }));
-  }, [initialListingType]);
 
   const handleListingTypeChange = (listingType) => {
     setForm({
@@ -193,7 +184,7 @@ function CreateListing({ initialListingType = "SELL", setListings, refreshListin
         <input name="price_per_kg" value={form.price_per_kg} placeholder={text.price} onChange={handleChange} className="w-full p-2 border rounded" />
         <input name="location" value={form.location} placeholder={text.location} onChange={handleChange} className="w-full p-2 border rounded" />
         <input name="seller" value={form.seller} placeholder={text.seller} onChange={handleChange} className="w-full p-2 border rounded" />
-        <input name="phone" value={form.phone} placeholder={text.phone} onChange={handleChange} className="w-full p-2 border rounded" />
+        <input name="phone" value={form.phone} placeholder={text.phone || "Phone Number"} onChange={handleChange} className="w-full p-2 border rounded" />
 
         {form.listing_type === "SELL" && (
           <div className="space-y-2">

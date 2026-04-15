@@ -27,7 +27,6 @@ function ProfilePage({ language }) {
       };
 
   useEffect(() => {
-    setLoading(true);
     api.get("/auth/me/")
       .then((res) => {
         setProfile(res.data);

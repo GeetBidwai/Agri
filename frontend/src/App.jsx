@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import api from "./api";
 import Navbar from "./components/Navbar";
@@ -125,7 +125,7 @@ function App() {
     window.location.hash = hashMap[nextRoute] || "#/";
   };
 
-  const fetchListings = () => {
+  const fetchListings = useCallback(() => {
     const params = {
       search: searchQuery,
     };
@@ -143,7 +143,7 @@ function App() {
         // Show an error message if fetching fails
         alert("Failed to load listings. Please make sure the backend is running and migrations are applied.");
       });
-  };
+  }, [searchQuery, activeListingType]);
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -179,7 +179,7 @@ function App() {
 
   useEffect(() => {
     fetchListings();
-  }, [searchQuery, activeListingType]);
+  }, [fetchListings]);
 
   useEffect(() => {
     localStorage.setItem("siteLanguage", language);
@@ -234,6 +234,7 @@ function App() {
         <section className="bg-gray-50 py-14 px-6 min-h-[calc(100vh-4rem)]">
           <div className="max-w-6xl mx-auto">
             <CreateListing
+              key={route.listingType || "SELL"}
               initialListingType={route.listingType || "SELL"}
               setListings={setListings}
               refreshListings={fetchListings}
@@ -271,6 +272,7 @@ function App() {
 
       {route.page === "contacts" && (
         <ContactsPage
+          key={route.productId}
           productId={route.productId}
           listing={listings.find((item) => String(item.id) === String(route.productId))}
           onNavigate={navigate}
