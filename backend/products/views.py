@@ -3,8 +3,8 @@ from rest_framework import status
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 
-from .models import Product, UserProfile
-from .serializers import ProductSerializer, ProductContactSerializer
+from .models import Product, UserProfile, Bid
+from .serializers import ProductSerializer, ProductContactSerializer, BidSerializer
 
 
 @api_view(['GET', 'POST'])
@@ -65,3 +65,22 @@ def get_product_contact(request, product_id):
     product = get_object_or_404(Product, pk=product_id)
     serializer = ProductContactSerializer(product)
     return Response(serializer.data)
+
+
+@api_view(['GET', 'POST'])
+def manage_bids(request, product_id):
+    product = get_object_or_404(Product, pk=product_id)
+
+    if request.method == 'GET':
+        bids = product.bids.all().order_by('-created_at')
+        serializer = BidSerializer(bids, many=True)
+        return Response(serializer.data)
+
+    if request.method == 'POST':
+        payload = request.data.copy()
+        payload['product'] = product.id
+        serializer = BidSerializer(data=payload)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

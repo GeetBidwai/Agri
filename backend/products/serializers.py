@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Product
+from .models import Product, Bid
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -20,6 +20,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'price_per_kg',
             'location',
             'seller',
+            'image',
             'verified',
             'is_verified',
             'created_at',
@@ -42,3 +43,10 @@ class ProductContactSerializer(serializers.ModelSerializer):
             "phone",
             "listing_type",
         ]
+
+
+class BidSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Bid
+        fields = ['id', 'buyer_name', 'buyer_phone', 'bid_price', 'quantity', 'created_at']
+        read_only_fields = ['created_at']

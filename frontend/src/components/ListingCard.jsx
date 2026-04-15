@@ -1,4 +1,4 @@
-function ListingCard({ item, onNavigateToContact, language }) {
+function ListingCard({ item, onNavigateToContact, onPlaceBid, onViewBids, language }) {
   const listingType = item.listing_type || item.type?.toUpperCase();
   const isTrusted = item.is_verified || item.verified;
 
@@ -15,6 +15,8 @@ function ListingCard({ item, onNavigateToContact, language }) {
         warning: "अग्रिम भुगतान न करें",
         report: "रिपोर्ट करें",
         viewContact: "संपर्क देखें",
+        placeBid: "बोली लगाएं",
+        viewBids: "बोलियां देखें",
         notSpecified: "उल्लेख नहीं",
       }
     : {
@@ -29,6 +31,8 @@ function ListingCard({ item, onNavigateToContact, language }) {
         warning: "Do not pay advance",
         report: "Report",
         viewContact: "View Contact",
+        placeBid: "Place Bid",
+        viewBids: "View Bids",
         notSpecified: "Not specified",
       };
 
@@ -46,6 +50,16 @@ function ListingCard({ item, onNavigateToContact, language }) {
         <span className="ml-2 inline-block rounded-full bg-teal-50 px-2 py-1 text-xs font-semibold text-teal-700">
           {text.verified}
         </span>
+      )}
+
+      {item.image && typeof item.image === "string" && (
+        <div className="mt-4 aspect-video w-full overflow-hidden rounded-xl border border-gray-100">
+          <img
+            src={item.image}
+            alt={item.name}
+            className="h-full w-full object-cover transition-transform hover:scale-105"
+          />
+        </div>
       )}
 
       <h3 className="mt-2 font-bold text-lg">
@@ -91,6 +105,26 @@ function ListingCard({ item, onNavigateToContact, language }) {
           >
             {text.viewContact}
           </button>
+
+          {listingType === "SELL" && (
+            <button
+              type="button"
+              onClick={() => onPlaceBid(item)}
+              className="bg-amber-500 text-white px-3 py-1 rounded-lg text-xs hover:bg-amber-600 transition-colors"
+            >
+              {text.placeBid}
+            </button>
+          )}
+
+          {listingType === "SELL" && onViewBids && (
+            <button
+              type="button"
+              onClick={() => onViewBids(item.id)}
+              className="border border-green-200 bg-green-50 text-green-600 px-3 py-1 rounded-lg text-xs hover:bg-green-100 transition-colors"
+            >
+              {text.viewBids}
+            </button>
+          )}
         </div>
       </div>
     </div>

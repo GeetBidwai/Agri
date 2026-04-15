@@ -79,7 +79,7 @@ function Navbar({
         <button type="button" onClick={() => onNavigate("sell")} className="px-3 py-2 rounded-lg text-sm font-medium hover:bg-green-50">
           {text.sell}
         </button>
-        <button className="px-3 py-2 rounded-lg text-sm font-medium hover:bg-green-50">
+        <button type="button" onClick={() => onNavigate("mandi-prices")} className="px-3 py-2 rounded-lg text-sm font-medium hover:bg-green-50">
           {text.mandiPrices}
         </button>
       </div>

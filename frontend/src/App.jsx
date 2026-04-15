@@ -11,6 +11,9 @@ import CreateListing from "./components/CreateListing";
 import AuthPage from "./components/AuthPage";
 import ContactsPage from "./components/ContactsPage";
 import ProfilePage from "./components/ProfilePage";
+import MandiPrices from "./pages/MandiPrices";
+import BidModal from "./components/BidModal";
+import ProductBidsPage from "./pages/ProductBidsPage";
 
 const getRouteFromHash = () => {
   const hash = window.location.hash || "#/";
@@ -25,6 +28,17 @@ const getRouteFromHash = () => {
 
   if (hash === "#/profile") {
     return { page: "profile" };
+  }
+
+  if (hash === "#/mandi-prices") {
+    return { page: "mandi-prices" };
+  }
+
+  if (hash.startsWith("#/product-bids/")) {
+    return {
+      page: "product-bids",
+      productId: hash.replace("#/product-bids/", ""),
+    };
   }
 
   if (hash === "#/create" || hash === "#/create/sell") {
@@ -64,6 +78,8 @@ function App() {
     return savedUser ? JSON.parse(savedUser) : null;
   });
 
+  const [bidModalProduct, setBidModalProduct] = useState(null);
+
   const isAuthenticated = Boolean(localStorage.getItem("authToken"));
 
   const navigate = (nextRoute, value) => {
@@ -75,6 +91,7 @@ function App() {
       signup: "#/signup",
       profile: "#/profile",
       create: "#/create/sell",
+      "mandi-prices": "#/mandi-prices",
     };
 
     if (nextRoute === "contacts" && value) {
@@ -84,6 +101,11 @@ function App() {
 
     if (nextRoute === "create" && value) {
       window.location.hash = value === "BUY" ? "#/create/buy" : "#/create/sell";
+      return;
+    }
+
+    if (nextRoute === "product-bids") {
+      window.location.hash = `#/product-bids/${value}`;
       return;
     }
 
@@ -100,8 +122,14 @@ function App() {
     }
 
     api.get("/products/", { params })
-      .then((res) => setListings(res.data))
-      .catch((err) => console.error(err));
+      .then((res) => {
+        setListings(res.data);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch listings:", err);
+        // Show an error message if fetching fails
+        alert("Failed to load listings. Please make sure the backend is running and migrations are applied.");
+      });
   };
 
   useEffect(() => {
@@ -156,6 +184,10 @@ function App() {
     navigate("home");
   };
 
+  const handlePlaceBid = (product) => {
+    setBidModalProduct(product);
+  };
+
   return (
     <div>
       <Navbar
@@ -202,6 +234,19 @@ function App() {
         <ProfilePage language={language} />
       )}
 
+      {route.page === "mandi-prices" && (
+        <MandiPrices language={language} />
+      )}
+
+      {route.page === "product-bids" && (
+        <ProductBidsPage
+          productId={route.productId}
+          product={listings.find((item) => String(item.id) === String(route.productId))}
+          onBack={() => navigate("home")}
+          language={language}
+        />
+      )}
+
       {route.page === "contacts" && (
         <ContactsPage
           productId={route.productId}
@@ -220,11 +265,21 @@ function App() {
             activeListingType={activeListingType}
             setActiveListingType={setActiveListingType}
             onNavigateToContact={(productId) => navigate("contacts", productId)}
+            onPlaceBid={handlePlaceBid}
+            onViewBids={(productId) => navigate("product-bids", productId)}
             language={language}
           />
           <HowItWorks language={language} />
           <AppBanner language={language} />
         </>
+      )}
+
+      {bidModalProduct && (
+        <BidModal
+          product={bidModalProduct}
+          onClose={() => setBidModalProduct(null)}
+          language={language}
+        />
       )}
     </div>
   );

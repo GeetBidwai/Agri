@@ -14,9 +14,11 @@ function CreateListing({ initialListingType = "SELL", setListings, refreshListin
     location: "",
     seller: "",
     phone: "",
+    image: null,
     verified: false,
   });
 
+  const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const text = language === "HI"
@@ -31,6 +33,7 @@ function CreateListing({ initialListingType = "SELL", setListings, refreshListin
         price: "प्रति किलो कीमत",
         location: "स्थान",
         seller: "विक्रेता का नाम",
+        image: "उत्पाद की छवि (केवल बेचने के लिए)",
         submit: "जमा करें",
         submitting: "जमा हो रहा है...",
         validation: "कृपया जरूरी फ़ील्ड भरें (नाम, कीमत, स्थान)",
@@ -49,6 +52,7 @@ function CreateListing({ initialListingType = "SELL", setListings, refreshListin
         location: "Location",
         seller: "Seller Name",
         phone: "Contact Phone",
+        image: "Product Image (Selling only)",
         submit: "Submit",
         submitting: "Submitting...",
         validation: "Please fill required fields (name, price, location, phone)",
@@ -57,6 +61,7 @@ function CreateListing({ initialListingType = "SELL", setListings, refreshListin
       };
 
   useEffect(() => {
+    console.log("Setting form from initialListingType:", initialListingType);
     setForm((prev) => ({
       ...prev,
       listing_type: initialListingType,
@@ -73,8 +78,22 @@ function CreateListing({ initialListingType = "SELL", setListings, refreshListin
   };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
+    const { name, value, files } = e.target;
+    if (name === "image") {
+      const file = files[0];
+      setForm({ ...form, image: file });
+      if (file) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImagePreview(reader.result);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        setImagePreview(null);
+      }
+    } else {
+      setForm({ ...form, [name]: value });
+    }
   };
 
   const handleSubmit = (e) => {
@@ -87,7 +106,22 @@ function CreateListing({ initialListingType = "SELL", setListings, refreshListin
 
     setLoading(true);
 
-    api.post("/products/", form)
+    const formData = new FormData();
+    Object.keys(form).forEach((key) => {
+      if (key === "image") {
+        if (form[key]) {
+          formData.append(key, form[key]);
+        }
+      } else {
+        formData.append(key, form[key]);
+      }
+    });
+
+    api.post("/products/", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    })
       .then((res) => {
         alert(text.created);
 
@@ -108,9 +142,10 @@ function CreateListing({ initialListingType = "SELL", setListings, refreshListin
           location: "",
           seller: "",
           phone: "",
+          image: null,
           verified: false,
         });
-
+        setImagePreview(null);
         setLoading(false);
       })
       .catch((err) => {
@@ -159,6 +194,30 @@ function CreateListing({ initialListingType = "SELL", setListings, refreshListin
         <input name="location" value={form.location} placeholder={text.location} onChange={handleChange} className="w-full p-2 border rounded" />
         <input name="seller" value={form.seller} placeholder={text.seller} onChange={handleChange} className="w-full p-2 border rounded" />
         <input name="phone" value={form.phone} placeholder={text.phone} onChange={handleChange} className="w-full p-2 border rounded" />
+
+        {form.listing_type === "SELL" && (
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              {text.image}
+            </label>
+            <input
+              type="file"
+              name="image"
+              accept="image/*"
+              onChange={handleChange}
+              className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+            />
+            {imagePreview && (
+              <div className="mt-2 relative w-24 h-24 rounded-lg overflow-hidden border border-gray-200">
+                <img
+                  src={imagePreview}
+                  alt="Preview"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+          </div>
+        )}
 
         <button
           disabled={loading}
