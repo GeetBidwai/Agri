@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+
 import api from "../api";
+import { formatPricePerKg } from "../utils/price";
 
 function ProductBidsPage({ productId, product, onBack, language }) {
   const [bids, setBids] = useState([]);
@@ -7,16 +9,16 @@ function ProductBidsPage({ productId, product, onBack, language }) {
 
   const text = language === "HI"
     ? {
-        title: "इस उत्पाद की बोलियां",
-        back: "वापस जाएं",
-        noBids: "अभी तक कोई बोली नहीं",
-        highestBid: "उच्चतम बोली",
-        buyer: "खरीदार",
-        phone: "फोन",
-        price: "बोली मूल्य",
-        qty: "मात्रा",
-        date: "तारीख",
-        listedPrice: "सूचीबद्ध मूल्य",
+        title: "à¤‡à¤¸ à¤‰à¤¤à¥à¤ªà¤¾à¤¦ à¤•à¥€ à¤¬à¥‹à¤²à¤¿à¤¯à¤¾à¤‚",
+        back: "à¤µà¤¾à¤ªà¤¸ à¤œà¤¾à¤à¤‚",
+        noBids: "à¤…à¤­à¥€ à¤¤à¤• à¤•à¥‹à¤ˆ à¤¬à¥‹à¤²à¥€ à¤¨à¤¹à¥€à¤‚",
+        highestBid: "à¤‰à¤šà¥à¤šà¤¤à¤® à¤¬à¥‹à¤²à¥€",
+        buyer: "à¤–à¤°à¥€à¤¦à¤¾à¤°",
+        phone: "à¤«à¥‹à¤¨",
+        price: "à¤¬à¥‹à¤²à¥€ à¤®à¥‚à¤²à¥à¤¯",
+        qty: "à¤®à¤¾à¤¤à¥à¤°à¤¾",
+        date: "à¤¤à¤¾à¤°à¥€à¤–",
+        listedPrice: "à¤¸à¥‚à¤šà¥€à¤¬à¤¦à¥à¤§ à¤®à¥‚à¤²à¥à¤¯",
       }
     : {
         title: "Bids for this Product",
@@ -74,7 +76,7 @@ function ProductBidsPage({ productId, product, onBack, language }) {
               </div>
               <div className="ml-auto text-right">
                 <p className="text-sm text-gray-500">{text.listedPrice}</p>
-                <p className="text-xl font-bold text-green-600">₹{product.price_per_kg}/kg</p>
+                <p className="text-xl font-bold text-green-600">{formatPricePerKg(product.price_per_kg)}</p>
               </div>
             </div>
           )}

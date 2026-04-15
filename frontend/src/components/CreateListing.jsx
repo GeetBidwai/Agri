@@ -1,5 +1,4 @@
 import { useState } from "react";
-
 import api from "../api";
 
 function CreateListing({ initialListingType = "SELL", setListings, refreshListings, language }) {
@@ -33,10 +32,11 @@ function CreateListing({ initialListingType = "SELL", setListings, refreshListin
         price: "प्रति किलो कीमत",
         location: "स्थान",
         seller: "विक्रेता का नाम",
+        phone: "फ़ोन नंबर",
         image: "उत्पाद की छवि (केवल बेचने के लिए)",
         submit: "जमा करें",
         submitting: "जमा हो रहा है...",
-        validation: "कृपया जरूरी फ़ील्ड भरें (नाम, कीमत, स्थान)",
+        validation: "कृपया जरूरी फ़ील्ड भरें",
         created: "लिस्टिंग बन गई!",
         error: "कुछ गलत हो गया!",
       }
@@ -55,7 +55,7 @@ function CreateListing({ initialListingType = "SELL", setListings, refreshListin
         image: "Product Image (Selling only)",
         submit: "Submit",
         submitting: "Submitting...",
-        validation: "Please fill required fields (name, price, location, phone)",
+        validation: "Please fill required fields",
         created: "Listing created!",
         error: "Something went wrong!",
       };
@@ -70,14 +70,14 @@ function CreateListing({ initialListingType = "SELL", setListings, refreshListin
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
+
     if (name === "image") {
       const file = files[0];
       setForm({ ...form, image: file });
+
       if (file) {
         const reader = new FileReader();
-        reader.onloadend = () => {
-          setImagePreview(reader.result);
-        };
+        reader.onloadend = () => setImagePreview(reader.result);
         reader.readAsDataURL(file);
       } else {
         setImagePreview(null);
@@ -90,28 +90,36 @@ function CreateListing({ initialListingType = "SELL", setListings, refreshListin
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (!form.name || !form.price_per_kg || !form.location || !form.phone) {
+    // ✅ FIXED VALIDATION
+    if (!form.name || !form.price_per_kg || !form.location) {
       alert(text.validation);
+      return;
+    }
+
+    if (form.listing_type === "SELL" && !form.phone) {
+      alert("Phone is required for selling");
       return;
     }
 
     setLoading(true);
 
     const formData = new FormData();
+
     Object.keys(form).forEach((key) => {
       if (key === "image") {
-        if (form[key]) {
+        if (form[key]) formData.append(key, form[key]);
+      } else {
+        // ✅ Clean BUY payload
+        if (form.listing_type === "BUY" && (key === "seller" || key === "phone")) {
+          formData.append(key, "");
+        } else {
           formData.append(key, form[key]);
         }
-      } else {
-        formData.append(key, form[key]);
       }
     });
 
     api.post("/products/", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
+      headers: { "Content-Type": "multipart/form-data" },
     })
       .then((res) => {
         alert(text.created);
@@ -136,6 +144,7 @@ function CreateListing({ initialListingType = "SELL", setListings, refreshListin
           image: null,
           verified: false,
         });
+
         setImagePreview(null);
         setLoading(false);
       })
@@ -151,69 +160,35 @@ function CreateListing({ initialListingType = "SELL", setListings, refreshListin
       <h2 className="text-xl font-bold mb-4">{text.title}</h2>
 
       <form onSubmit={handleSubmit} className="space-y-3">
+
+        {/* Toggle */}
         <div className="grid grid-cols-2 gap-3">
-          <button
-            type="button"
-            onClick={() => handleListingTypeChange("BUY")}
-            className={`rounded border px-4 py-2 font-medium transition ${
-              form.listing_type === "BUY"
-                ? "border-amber-500 bg-amber-50 text-amber-700"
-                : "border-gray-200 bg-white text-gray-600"
-            }`}
-          >
+          <button type="button" onClick={() => handleListingTypeChange("BUY")}>
             {text.buy}
           </button>
 
-          <button
-            type="button"
-            onClick={() => handleListingTypeChange("SELL")}
-            className={`rounded border px-4 py-2 font-medium transition ${
-              form.listing_type === "SELL"
-                ? "border-green-600 bg-green-50 text-green-700"
-                : "border-gray-200 bg-white text-gray-600"
-            }`}
-          >
+          <button type="button" onClick={() => handleListingTypeChange("SELL")}>
             {text.sell}
           </button>
         </div>
 
+        {/* Common fields */}
         <input name="name" value={form.name} placeholder={text.name} onChange={handleChange} className="w-full p-2 border rounded" />
         <input name="hindi" value={form.hindi} placeholder={text.hindi} onChange={handleChange} className="w-full p-2 border rounded" />
         <input name="variety" value={form.variety} placeholder={text.variety} onChange={handleChange} className="w-full p-2 border rounded" />
         <input name="quantity" value={form.quantity} placeholder={text.quantity} onChange={handleChange} className="w-full p-2 border rounded" />
         <input name="price_per_kg" value={form.price_per_kg} placeholder={text.price} onChange={handleChange} className="w-full p-2 border rounded" />
         <input name="location" value={form.location} placeholder={text.location} onChange={handleChange} className="w-full p-2 border rounded" />
-        <input name="seller" value={form.seller} placeholder={text.seller} onChange={handleChange} className="w-full p-2 border rounded" />
-        <input name="phone" value={form.phone} placeholder={text.phone || "Phone Number"} onChange={handleChange} className="w-full p-2 border rounded" />
 
+        {/* SELL ONLY */}
         {form.listing_type === "SELL" && (
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
-              {text.image}
-            </label>
-            <input
-              type="file"
-              name="image"
-              accept="image/*"
-              onChange={handleChange}
-              className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
-            />
-            {imagePreview && (
-              <div className="mt-2 relative w-24 h-24 rounded-lg overflow-hidden border border-gray-200">
-                <img
-                  src={imagePreview}
-                  alt="Preview"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            )}
-          </div>
+          <>
+            <input name="seller" value={form.seller} placeholder={text.seller} onChange={handleChange} className="w-full p-2 border rounded" />
+            <input name="phone" value={form.phone} placeholder={text.phone} onChange={handleChange} className="w-full p-2 border rounded" />
+          </>
         )}
 
-        <button
-          disabled={loading}
-          className="bg-green-600 text-white px-4 py-2 rounded w-full"
-        >
+        <button className="bg-green-600 text-white px-4 py-2 rounded w-full">
           {loading ? text.submitting : text.submit}
         </button>
       </form>

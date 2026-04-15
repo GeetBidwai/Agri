@@ -1,7 +1,8 @@
+import { useEffect, useState } from "react";
+import api from "../api";
 import ListingCard from "./ListingCard";
 
 function LatestListings({
-  listings,
   activeListingType,
   setActiveListingType,
   onNavigateToContact,
@@ -9,6 +10,8 @@ function LatestListings({
   onViewBids,
   language,
 }) {
+  const [listings, setListings] = useState([]);
+
   const text = language === "HI"
     ? {
         title: "नई लिस्टिंग",
@@ -22,6 +25,23 @@ function LatestListings({
         sell: "Available to Sell",
         buy: "Buyers Looking For",
       };
+
+  // 🔥 FETCH DATA FROM BACKEND
+  useEffect(() => {
+    api.get("/products/")
+      .then((res) => {
+        console.log("DATA:", res.data);
+        setListings(res.data);
+      })
+      .catch((err) => {
+        console.error("Error fetching listings:", err);
+      });
+  }, []);
+
+  // 🔥 FILTER BASED ON TYPE
+  const filteredListings = listings.filter(
+    (item) => item.listing_type === activeListingType
+  );
 
   return (
     <section id="latest-listings" className="bg-gray-50 py-14 px-6">
@@ -56,10 +76,10 @@ function LatestListings({
         </div>
 
         <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
-          {listings.length > 0 ? (
-            listings.map((item, index) => (
+          {filteredListings.length > 0 ? (
+            filteredListings.map((item) => (
               <ListingCard
-                key={index}
+                key={item.id}
                 item={item}
                 onNavigateToContact={onNavigateToContact}
                 onPlaceBid={onPlaceBid}

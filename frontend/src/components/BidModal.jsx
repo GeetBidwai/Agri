@@ -1,5 +1,7 @@
 import { useState } from "react";
+
 import api from "../api";
+import { formatPricePerKg } from "../utils/price";
 
 function BidModal({ product, onClose, language }) {
   const [form, setForm] = useState({
@@ -13,22 +15,22 @@ function BidModal({ product, onClose, language }) {
 
   const text = language === "HI"
     ? {
-        title: "बोली लगाएं",
-        name: "आपका नाम",
-        phone: "फोन नंबर",
-        price: "बोली मूल्य (₹/kg)",
-        qty: "मात्रा (kg)",
-        submit: "बोली जमा करें",
-        submitting: "जमा हो रहा है...",
-        success: "आपकी बोली सफलतापूर्वक जमा हो गई!",
-        error: "कुछ गलत हो गया!",
-        close: "बंद करें",
+        title: "à¤¬à¥‹à¤²à¥€ à¤²à¤—à¤¾à¤à¤‚",
+        name: "à¤†à¤ªà¤•à¤¾ à¤¨à¤¾à¤®",
+        phone: "à¤«à¥‹à¤¨ à¤¨à¤‚à¤¬à¤°",
+        price: "à¤¬à¥‹à¤²à¥€ à¤®à¥‚à¤²à¥à¤¯ (â‚¹/kg)",
+        qty: "à¤®à¤¾à¤¤à¥à¤°à¤¾ (kg)",
+        submit: "à¤¬à¥‹à¤²à¥€ à¤œà¤®à¤¾ à¤•à¤°à¥‡à¤‚",
+        submitting: "à¤œà¤®à¤¾ à¤¹à¥‹ à¤°à¤¹à¤¾ à¤¹à¥ˆ...",
+        success: "à¤†à¤ªà¤•à¥€ à¤¬à¥‹à¤²à¥€ à¤¸à¤«à¤²à¤¤à¤¾à¤ªà¥‚à¤°à¥à¤µà¤• à¤œà¤®à¤¾ à¤¹à¥‹ à¤—à¤ˆ!",
+        error: "à¤•à¥à¤› à¤—à¤²à¤¤ à¤¹à¥‹ à¤—à¤¯à¤¾!",
+        close: "à¤¬à¤‚à¤¦ à¤•à¤°à¥‡à¤‚",
       }
     : {
         title: "Place Your Bid",
         name: "Your Name",
         phone: "Phone Number",
-        price: "Bid Price (₹/kg)",
+        price: "Bid Price (â‚¹/kg)",
         qty: "Quantity (kg)",
         submit: "Submit Bid",
         submitting: "Submitting...",
@@ -84,7 +86,7 @@ function BidModal({ product, onClose, language }) {
           <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-100">
             <p className="font-semibold text-gray-800">{product.name}</p>
             <p className="text-sm text-gray-500">{product.variety}</p>
-            <p className="text-green-600 font-bold">Listed: ₹{product.price_per_kg}/kg</p>
+            <p className="text-green-600 font-bold">Listed: {formatPricePerKg(product.price_per_kg)}</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">

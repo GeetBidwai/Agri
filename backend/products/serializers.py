@@ -9,7 +9,6 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = [
             'id',
-            'type',
             'user',
             'username',
             'listing_type',
@@ -22,7 +21,6 @@ class ProductSerializer(serializers.ModelSerializer):
             'seller',
             'category',
             'image',
-            'verified',
             'is_verified',
             'created_at',
         ]
@@ -49,5 +47,12 @@ class ProductContactSerializer(serializers.ModelSerializer):
 class BidSerializer(serializers.ModelSerializer):
     class Meta:
         model = Bid
-        fields = ['id', 'buyer_name', 'buyer_phone', 'bid_price', 'quantity', 'created_at']
+        fields = [
+            'id',
+            'buyer_name',
+            'buyer_phone',
+            'bid_price',
+            'quantity',
+            'created_at'
+        ]
         read_only_fields = ['created_at']

@@ -15,16 +15,11 @@ class UserProfile(models.Model):
 
 
 class Product(models.Model):
-    TYPE_CHOICES = [
-        ('sell', 'Sell'),
-        ('buy', 'Buy'),
-    ]
     LISTING_TYPE_CHOICES = [
         ('SELL', 'Sell'),
         ('BUY', 'Buy'),
     ]
 
-    type = models.CharField(max_length=10, choices=TYPE_CHOICES)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -32,26 +27,34 @@ class Product(models.Model):
         blank=True,
         related_name="products",
     )
+
     listing_type = models.CharField(
         max_length=10,
         choices=LISTING_TYPE_CHOICES,
         default='SELL',
     )
+
     name = models.CharField(max_length=100)
-    hindi = models.CharField(max_length=100)
-    variety = models.CharField(max_length=100)
-    quantity = models.CharField(max_length=50)
-    price_per_kg = models.CharField(max_length=20)
+    hindi = models.CharField(max_length=100, blank=True)
+    variety = models.CharField(max_length=100, blank=True)
+
+    quantity = models.IntegerField()  # changed to numeric
+
+    price_per_kg = models.DecimalField(max_digits=10, decimal_places=2)
+
     location = models.CharField(max_length=100)
     seller = models.CharField(max_length=100)
+
     category = models.CharField(max_length=50, blank=True, null=True)
+
     image = models.ImageField(upload_to='products/', null=True, blank=True)
-    verified = models.BooleanField(default=False)
+
     is_verified = models.BooleanField(default=False)
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.name
+        return f"{self.name} ({self.listing_type})"
 
 
 class Bid(models.Model):
@@ -63,7 +66,7 @@ class Bid(models.Model):
     buyer_name = models.CharField(max_length=100)
     buyer_phone = models.CharField(max_length=20)
     bid_price = models.DecimalField(max_digits=10, decimal_places=2)
-    quantity = models.CharField(max_length=50)
+    quantity = models.IntegerField()  # changed to numeric
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
