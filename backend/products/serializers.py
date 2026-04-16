@@ -1,11 +1,13 @@
 from rest_framework import serializers
-from .models import Product, Bid, SellerVerification
+from .models import Product, Bid, SellerKYC, SellerVerification
 
 
 class ProductSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source="user.username", read_only=True)
     product_name = serializers.CharField(required=False, allow_blank=True)
     hindi_name = serializers.CharField(required=False, allow_blank=True)
+    price = serializers.DecimalField(source="price_per_kg", max_digits=10, decimal_places=2, required=False)
+    seller_verified = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -21,12 +23,16 @@ class ProductSerializer(serializers.ModelSerializer):
             'variety',
             'quantity',
             'price_per_kg',
+            'price',
+            'description',
+            'status',
             'location',
             'seller',
             'contact_phone',
             'category',
             'image',
             'is_verified',
+            'seller_verified',
             'created_at',
         ]
         read_only_fields = [
@@ -37,6 +43,10 @@ class ProductSerializer(serializers.ModelSerializer):
             'is_verified',
             'created_at',
         ]
+
+    def get_seller_verified(self, obj):
+        profile = getattr(obj.user, "profile", None)
+        return bool(getattr(profile, "is_verified", False))
 
     def _sync_legacy_fields(self, validated_data):
         product_name = validated_data.pop("product_name", None)
@@ -76,12 +86,17 @@ class ProductSerializer(serializers.ModelSerializer):
 class ProductContactSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source="user.username", read_only=True)
     phone = serializers.SerializerMethodField()
+    seller_verified = serializers.SerializerMethodField()
 
     def get_phone(self, obj):
         if obj.contact_phone:
             return obj.contact_phone
         profile = getattr(obj.user, "profile", None)
         return getattr(profile, "phone", "")
+
+    def get_seller_verified(self, obj):
+        profile = getattr(obj.user, "profile", None)
+        return bool(getattr(profile, "is_verified", False))
 
     class Meta:
         model = Product
@@ -90,6 +105,7 @@ class ProductContactSerializer(serializers.ModelSerializer):
             "username",
             "phone",
             "listing_type",
+            "seller_verified",
         ]
 
 
@@ -129,5 +145,24 @@ class SellerVerificationSerializer(serializers.ModelSerializer):
             "user",
             "verification_status",
             "is_verified",
+            "created_at",
+        ]
+
+
+class SellerKYCSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SellerKYC
+        fields = [
+            "id",
+            "user",
+            "id_proof",
+            "selfie",
+            "status",
+            "created_at",
+        ]
+        read_only_fields = [
+            "id",
+            "user",
+            "status",
             "created_at",
         ]

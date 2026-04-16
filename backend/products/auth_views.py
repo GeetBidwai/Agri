@@ -6,6 +6,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from .models import Product, UserProfile
+from .permissions import get_or_create_profile
 
 
 User = get_user_model()
@@ -17,6 +18,10 @@ def signup(request):
     username = request.data.get("username", "").strip()
     password = request.data.get("password", "")
     phone = request.data.get("phone", "").strip()
+    role = request.data.get("role", "buyer")
+    role = role.strip().lower() if isinstance(role, str) else "buyer"
+    if role not in {"buyer", "seller"}:
+        role = "buyer"
 
     if not username or not password or not phone:
         return Response(
@@ -31,7 +36,7 @@ def signup(request):
         )
 
     user = User.objects.create_user(username=username, password=password)
-    UserProfile.objects.create(user=user, phone=phone)
+    UserProfile.objects.create(user=user, phone=phone, role=role)
     token, _ = Token.objects.get_or_create(user=user)
 
     return Response(
@@ -41,6 +46,8 @@ def signup(request):
                 "id": user.id,
                 "username": user.username,
                 "phone": phone,
+                "role": role,
+                "is_verified": False,
             },
         },
         status=status.HTTP_201_CREATED,
@@ -61,7 +68,7 @@ def login(request):
         )
 
     token, _ = Token.objects.get_or_create(user=user)
-    profile, _ = UserProfile.objects.get_or_create(user=user)
+    profile, _ = get_or_create_profile(user)
 
     return Response(
         {
@@ -70,6 +77,8 @@ def login(request):
                 "id": user.id,
                 "username": user.username,
                 "phone": profile.phone,
+                "role": profile.role,
+                "is_verified": profile.is_verified,
             },
         }
     )
@@ -78,13 +87,15 @@ def login(request):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def me(request):
-    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    profile, _ = get_or_create_profile(request.user)
 
     return Response(
         {
             "id": request.user.id,
             "username": request.user.username,
             "phone": profile.phone,
+            "role": profile.role,
+            "is_verified": profile.is_verified,
             "listing_count": Product.objects.filter(user=request.user).count(),
         }
     )

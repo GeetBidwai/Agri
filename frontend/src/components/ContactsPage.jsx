@@ -33,6 +33,7 @@ function ContactsPage({ productId, listing, onNavigate, language }) {
         type: "Type",
         owner: "Owner",
         location: "Location",
+        verified: "Verified Seller",
         notAvailable: "N/A",
         warning: "Do not pay advance. Meet carefully and verify details before making a deal.",
         viewPhone: "View Phone",
@@ -72,6 +73,7 @@ function ContactsPage({ productId, listing, onNavigate, language }) {
             <p><span className="font-semibold">{text.listing}:</span> {listing?.name || "Product listing"}</p>
             <p><span className="font-semibold">{text.type}:</span> {listing?.listing_type || contact?.listing_type || text.notAvailable}</p>
             <p><span className="font-semibold">{text.owner}:</span> {contact?.username || listing?.username || listing?.seller || text.notAvailable}</p>
+            <p><span className="font-semibold">{text.verified || "Verified Seller"}:</span> {contact?.seller_verified ? "Yes" : "No"}</p>
             <p><span className="font-semibold">{text.location}:</span> {listing?.location || text.notAvailable}</p>
           </div>
 

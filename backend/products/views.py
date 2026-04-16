@@ -3,12 +3,13 @@ from rest_framework import status
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 
-from .models import Product, UserProfile, Bid
+from .models import Product, Bid
+from .permissions import get_or_create_profile, is_seller
 from .serializers import ProductSerializer, ProductContactSerializer, BidSerializer
 
 
 def perform_create(serializer, request):
-    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    profile, _ = get_or_create_profile(request.user)
     phone = profile.phone
 
     product_name = serializer.validated_data.get("product_name") or serializer.validated_data.get("name", "")
@@ -32,6 +33,8 @@ def get_products(request):
         search_query = request.GET.get('search', '').strip()
         listing_type = request.GET.get('type', '').strip().upper()
         category_query = request.GET.get('category', '').strip()
+        location_query = request.GET.get('location', '').strip()
+        max_price = request.GET.get('max_price', '').strip()
         products = Product.objects.all().order_by('-created_at')
 
         # Optional search keeps the old response unchanged when query is empty
@@ -46,6 +49,12 @@ def get_products(request):
         if category_query:
             products = products.filter(category__iexact=category_query)
 
+        if location_query:
+            products = products.filter(location__icontains=location_query)
+
+        if max_price:
+            products = products.filter(price_per_kg__lte=max_price)
+
         serializer = ProductSerializer(products, many=True, context={"request": request})
         return Response(serializer.data)
 
@@ -55,6 +64,11 @@ def get_products(request):
             return Response(
                 {"detail": "Authentication credentials were not provided."},
                 status=status.HTTP_401_UNAUTHORIZED,
+            )
+        if not is_seller(request.user):
+            return Response(
+                {"detail": "Only sellers can create listings."},
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         payload = request.data.copy()

@@ -5,13 +5,20 @@ from rest_framework.response import Response
 
 from .models import SellerVerification
 from .serializers import SellerVerificationSerializer
+from .permissions import is_seller
 
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def verify_seller(request):
+    if not is_seller(request.user):
+        return Response(
+            {"detail": "Only sellers can access seller verification."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
     existing = SellerVerification.objects.filter(user=request.user).order_by("-created_at").first()
-    serializer = SellerVerification(data=request.data, context={"request": request})
+    serializer = SellerVerificationSerializer(data=request.data, context={"request": request})
 
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -37,6 +44,12 @@ def verify_seller(request):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def verification_status(request):
+    if not is_seller(request.user):
+        return Response(
+            {"detail": "Only sellers can access seller verification."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
     verification = SellerVerification.objects.filter(user=request.user).order_by("-created_at").first()
 
     if not verification:

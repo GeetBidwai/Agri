@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 function Navbar({
   isAuthenticated,
   username,
+  userRole,
   verificationStatus,
   onNavigate,
   onLogout,
@@ -107,13 +108,15 @@ function Navbar({
           </button>
         )}
 
-        <button
-          type="button"
-          onClick={() => onNavigate("create", "SELL")}
-          className="border border-green-400 text-green-600 px-4 py-2 rounded-lg text-sm font-medium"
-        >
-          {text.postListing}
-        </button>
+        {userRole === "seller" && (
+          <button
+            type="button"
+            onClick={() => onNavigate("create", "SELL")}
+            className="border border-green-400 text-green-600 px-4 py-2 rounded-lg text-sm font-medium"
+          >
+            {text.postListing}
+          </button>
+        )}
 
         {isAuthenticated ? (
           <div className="relative" ref={menuRef}>
@@ -142,16 +145,42 @@ function Navbar({
                   {text.myProfile}
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    onNavigate("verify-account");
-                  }}
-                  className="block w-full px-4 py-3 text-left text-sm hover:bg-gray-50"
-                >
-                  {verificationLabel}
-                </button>
+                {userRole === "seller" && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        onNavigate("seller-dashboard");
+                      }}
+                      className="block w-full px-4 py-3 text-left text-sm hover:bg-gray-50"
+                    >
+                      Seller Dashboard
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        onNavigate("kyc");
+                      }}
+                      className="block w-full px-4 py-3 text-left text-sm hover:bg-gray-50"
+                    >
+                      KYC
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        onNavigate("verify-account");
+                      }}
+                      className="block w-full px-4 py-3 text-left text-sm hover:bg-gray-50"
+                    >
+                      {verificationLabel}
+                    </button>
+                  </>
+                )}
 
                 <button
                   type="button"

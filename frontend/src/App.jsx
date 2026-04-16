@@ -32,6 +32,14 @@ const getRouteFromHash = () => {
     return { page: "profile" };
   }
 
+  if (hash === "#/seller-dashboard") {
+    return { page: "seller-dashboard" };
+  }
+
+  if (hash === "#/kyc") {
+    return { page: "kyc" };
+  }
+
   if (hash === "#/verify-account") {
     return { page: "verify-account" };
   }
@@ -104,6 +112,8 @@ function App() {
       login: "#/login",
       signup: "#/signup",
       profile: "#/profile",
+      "seller-dashboard": "#/seller-dashboard",
+      kyc: "#/kyc",
       "verify-account": "#/verify-account",
       create: "#/create/sell",
       "mandi-prices": "#/mandi-prices",
@@ -155,10 +165,24 @@ function App() {
   useEffect(() => {
     const handleHashChange = () => {
       const nextRoute = getRouteFromHash();
+      const token = localStorage.getItem("authToken");
+      const currentUser = (() => {
+        try {
+          return JSON.parse(localStorage.getItem("authUser") || "null");
+        } catch {
+          return null;
+        }
+      })();
+      const sellerOnlyPages = new Set(["create", "seller-dashboard", "kyc", "verify-account"]);
 
       // Protect authenticated routes without adding a router dependency
-      if ((nextRoute.page === "create" || nextRoute.page === "profile" || nextRoute.page === "verify-account") && !localStorage.getItem("authToken")) {
+      if ((nextRoute.page === "create" || nextRoute.page === "profile" || nextRoute.page === "seller-dashboard" || nextRoute.page === "kyc" || nextRoute.page === "verify-account") && !token) {
         window.location.hash = "#/login";
+        return;
+      }
+
+      if (sellerOnlyPages.has(nextRoute.page) && currentUser?.role !== "seller") {
+        window.location.hash = "#/";
         return;
       }
 
@@ -198,6 +222,11 @@ function App() {
       return;
     }
 
+    if (user?.role !== "seller") {
+      setVerificationStatus("not_submitted");
+      return;
+    }
+
     api.get("/verification-status/")
       .then((res) => {
         setVerificationStatus(res.data.verification_status || "not_submitted");
@@ -208,9 +237,31 @@ function App() {
       });
   }, [isAuthenticated, user?.id]);
 
+  useEffect(() => {
+    if (!isAuthenticated) {
+      return;
+    }
+
+    api.get("/auth/me/")
+      .then((res) => {
+        const nextUser = {
+          id: res.data.id,
+          username: res.data.username,
+          phone: res.data.phone,
+          role: res.data.role,
+          is_verified: res.data.is_verified,
+        };
+        setUser(nextUser);
+        localStorage.setItem("authUser", JSON.stringify(nextUser));
+      })
+      .catch((err) => {
+        console.error("Failed to refresh current user:", err);
+      });
+  }, [isAuthenticated]);
+
   const handleAuthSuccess = (nextUser) => {
     setUser(nextUser);
-    navigate("home");
+    navigate(nextUser?.role === "seller" ? "seller-dashboard" : "home");
   };
 
   const handleLogout = () => {
@@ -229,6 +280,7 @@ function App() {
       <Navbar
         isAuthenticated={isAuthenticated}
         username={user?.username}
+        userRole={user?.role}
         verificationStatus={verificationStatus}
         onNavigate={navigate}
         onLogout={handleLogout}
@@ -270,6 +322,14 @@ function App() {
 
       {route.page === "profile" && (
         <ProfilePage language={language} />
+      )}
+
+      {route.page === "seller-dashboard" && (
+        <ProfilePage language={language} showSellerKyc />
+      )}
+
+      {route.page === "kyc" && (
+        <ProfilePage language={language} showSellerKyc />
       )}
 
       {route.page === "verify-account" && (

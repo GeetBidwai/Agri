@@ -7,6 +7,7 @@ function AuthPage({ mode, onAuthSuccess, onNavigate, language }) {
     username: "",
     password: "",
     phone: "",
+    role: "buyer",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -86,7 +87,16 @@ function AuthPage({ mode, onAuthSuccess, onNavigate, language }) {
           <input name="username" value={form.username} placeholder={text.username} onChange={handleChange} className="w-full p-3 border rounded-lg" />
 
           {!isLogin && (
-            <input name="phone" value={form.phone} placeholder={text.phone} onChange={handleChange} className="w-full p-3 border rounded-lg" />
+            <>
+              <input name="phone" value={form.phone} placeholder={text.phone} onChange={handleChange} className="w-full p-3 border rounded-lg" />
+              <label className="block text-sm text-gray-600">
+                {language === "HI" ? "Role" : "Role"}
+                <select name="role" value={form.role} onChange={handleChange} className="mt-1 w-full p-3 border rounded-lg">
+                  <option value="buyer">{language === "HI" ? "Buyer" : "Buyer"}</option>
+                  <option value="seller">{language === "HI" ? "Seller" : "Seller"}</option>
+                </select>
+              </label>
+            </>
           )}
 
           <input type="password" name="password" value={form.password} placeholder={text.password} onChange={handleChange} className="w-full p-3 border rounded-lg" />

@@ -26,6 +26,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path('api/products/', include('products.urls')),
     path('api/auth/', include('products.auth_urls')),
+    path("api/", include("products.marketplace_urls")),
     path("api/verify-seller/", verify_seller),
     path("api/verification-status/", verification_status),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

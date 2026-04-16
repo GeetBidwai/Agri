@@ -3,15 +3,57 @@ from django.db import models
 
 
 class UserProfile(models.Model):
+    ROLE_CHOICES = [
+        ("buyer", "Buyer"),
+        ("seller", "Seller"),
+    ]
+
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="profile",
     )
     phone = models.CharField(max_length=20, blank=True)
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="buyer")
+    is_verified = models.BooleanField(default=False)
+
+    @property
+    def is_seller(self):
+        return self.role == "seller"
 
     def __str__(self):
         return f"{self.user.username} profile"
+
+
+class SellerKYC(models.Model):
+    STATUS_CHOICES = [
+        ("Pending", "Pending"),
+        ("Verified", "Verified"),
+        ("Rejected", "Rejected"),
+    ]
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="seller_kyc_records",
+    )
+    id_proof = models.FileField(upload_to="kyc/")
+    selfie = models.FileField(upload_to="kyc/")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="Pending")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        UserProfile.objects.update_or_create(
+            user=self.user,
+            defaults={
+                "role": "seller",
+                "is_verified": self.status == "Verified",
+            },
+        )
+
+    def __str__(self):
+        return f"{self.user.username} KYC ({self.status})"
 
 
 class SellerVerification(models.Model):
@@ -43,6 +85,17 @@ class SellerVerification(models.Model):
     verification_status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
     is_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        UserProfile.objects.update_or_create(
+            user=self.user,
+            defaults={
+                "phone": getattr(getattr(self.user, "profile", None), "phone", ""),
+                "role": "seller",
+                "is_verified": self.is_verified or self.verification_status == "approved",
+            },
+        )
 
     def __str__(self):
         return f"{self.user.username} verification ({self.verification_status})"
@@ -88,6 +141,16 @@ class Product(models.Model):
     quantity = models.IntegerField()  # changed to numeric
 
     price_per_kg = models.DecimalField(max_digits=10, decimal_places=2)
+    description = models.TextField(blank=True, default="")
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ("active", "Active"),
+            ("sold", "Sold"),
+            ("expired", "Expired"),
+        ],
+        default="active",
+    )
 
     location = models.CharField(max_length=100)
     seller = models.CharField(max_length=100)

@@ -1,8 +1,9 @@
 function ListingCard({ item, onNavigateToContact, onPlaceBid, onViewBids, language }) {
   const listingType = item.listing_type || item.type?.toUpperCase();
-  const isTrusted = item.is_verified || item.verified;
+  const isTrusted = item.seller_verified || item.is_verified || item.verified;
   const displayName = item.product_name || item.name;
   const displayHindiName = item.hindi_name || item.hindi;
+  const displayPrice = item.price || item.price_per_kg;
 
   const text = language === "HI"
     ? {
@@ -24,15 +25,15 @@ function ListingCard({ item, onNavigateToContact, onPlaceBid, onViewBids, langua
     : {
         forSale: "FOR SALE",
         wanted: "WANTED",
-        verified: "Verified",
-        verifiedListing: "Verified listing",
+        verified: "Verified Seller",
+        verifiedListing: "Verified seller",
         qty: "Qty",
         location: "Location",
         date: "Date",
         recentlyAdded: "Recently added",
         warning: "Do not pay advance",
         report: "Report",
-        viewContact: "View Contact",
+        viewContact: "Contact Seller",
         placeBid: "Place Bid",
         viewBids: "View Bids",
         notSpecified: "Not specified",
@@ -71,13 +72,14 @@ function ListingCard({ item, onNavigateToContact, onPlaceBid, onViewBids, langua
       <p className="text-sm text-gray-500">{item.variety}</p>
 
       <h2 className="text-xl font-bold text-green-600 mt-2">
-        {item.price_per_kg}/kg
+        {displayPrice}/kg
       </h2>
 
       <div className="text-xs text-gray-400 mt-2 space-y-1">
         <p>{text.qty}: {item.qty || item.quantity || text.notSpecified}</p>
         <p>{text.location}: {item.location}</p>
         <p>{text.date}: {item.date || text.recentlyAdded}</p>
+        {item.description && <p>{item.description}</p>}
       </div>
 
       <div className="mt-3 pt-3 border-t flex justify-between items-center">

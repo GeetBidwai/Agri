@@ -43,6 +43,7 @@ const createInitialForm = (initialListingType) => ({
   quantity: "",
   price_per_kg: "",
   location: "",
+  description: "",
   image: null,
 });
 
@@ -90,6 +91,7 @@ function CreateListing({ initialListingType = "SELL", setListings, refreshListin
         quantity: "Quantity",
         price: "Price per kg",
         location: "Location",
+        description: "Description",
         image: "Product Image",
         selectCategory: "Select Category",
         selectType: "Select Listing Type",
@@ -148,12 +150,13 @@ function CreateListing({ initialListingType = "SELL", setListings, refreshListin
     formData.append("quantity", form.quantity);
     formData.append("price_per_kg", form.price_per_kg);
     formData.append("location", form.location);
+    formData.append("description", form.description);
 
     if (form.image) {
       formData.append("image", form.image);
     }
 
-    api.post("/products/", formData, {
+    api.post("/listings/create/", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     })
       .then((res) => {
@@ -266,6 +269,14 @@ function CreateListing({ initialListingType = "SELL", setListings, refreshListin
           value={form.location}
           placeholder={text.location}
           onChange={handleChange}
+          className="w-full p-2 border rounded"
+        />
+        <textarea
+          name="description"
+          value={form.description}
+          placeholder={text.description}
+          onChange={handleChange}
+          rows="3"
           className="w-full p-2 border rounded"
         />
         <input
