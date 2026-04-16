@@ -1,79 +1,113 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import api from "../api";
 
-function CreateListing({ initialListingType = "SELL", setListings, refreshListings, language }) {
-  const [form, setForm] = useState({
-    type: initialListingType.toLowerCase(),
-    listing_type: initialListingType,
-    name: "",
-    hindi: "",
-    variety: "",
-    quantity: "",
-    price_per_kg: "",
-    location: "",
-    seller: "",
-    phone: "",
-    image: null,
-    verified: false,
-  });
+const CATEGORY_OPTIONS = ["Grains", "Pulses", "Spices", "Oilseeds", "Vegetables", "Fruits", "Cotton", "Sugar"];
 
+const HINDI_TRANSLATIONS = {
+  wheat: "गेहूं",
+  rice: "चावल",
+  maize: "मक्का",
+  corn: "मक्का",
+  barley: "जौ",
+  millet: "बाजरा",
+  sorghum: "ज्वार",
+  tur: "अरहर",
+  "tur dal": "अरहर दाल",
+  lentil: "मसूर",
+  chickpea: "चना",
+  gram: "चना",
+  moong: "मूंग",
+  urad: "उड़द",
+  soybean: "सोयाबीन",
+  mustard: "सरसों",
+  groundnut: "मूंगफली",
+  cumin: "जीरा",
+  coriander: "धनिया",
+  chilli: "मिर्च",
+  chili: "मिर्च",
+  turmeric: "हल्दी",
+  onion: "प्याज",
+  potato: "आलू",
+  tomato: "टमाटर",
+  cotton: "कपास",
+  sugarcane: "गन्ना",
+  sugar: "चीनी",
+};
+
+const createInitialForm = (initialListingType) => ({
+  product_name: "",
+  hindi_name: "",
+  category: "",
+  listing_type: initialListingType,
+  variety: "",
+  quantity: "",
+  price_per_kg: "",
+  location: "",
+  image: null,
+});
+
+function CreateListing({ initialListingType = "SELL", setListings, refreshListings, language }) {
+  const [form, setForm] = useState(() => createInitialForm(initialListingType));
   const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  const suggestedHindi = useMemo(() => {
+    const key = form.product_name.trim().toLowerCase();
+    return HINDI_TRANSLATIONS[key] || "";
+  }, [form.product_name]);
+
+  const showHindiSuggestion = suggestedHindi && suggestedHindi !== form.hindi_name;
+
   const text = language === "HI"
     ? {
-        title: "लिस्टिंग बनाएं",
-        buy: "मैं खरीदना चाहता हूं",
-        sell: "मैं बेचना चाहता हूं",
-        name: "उत्पाद का नाम",
-        hindi: "हिंदी नाम",
-        variety: "किस्म",
-        quantity: "मात्रा",
-        price: "प्रति किलो कीमत",
-        location: "स्थान",
-        seller: "विक्रेता का नाम",
-        phone: "फ़ोन नंबर",
-        image: "उत्पाद की छवि (केवल बेचने के लिए)",
-        submit: "जमा करें",
-        submitting: "जमा हो रहा है...",
-        validation: "कृपया जरूरी फ़ील्ड भरें",
-        created: "लिस्टिंग बन गई!",
-        error: "कुछ गलत हो गया!",
+        title: "à¤²à¤¿à¤¸à¥à¤Ÿà¤¿à¤‚à¤— à¤¬à¤¨à¤¾à¤à¤‚",
+        name: "à¤‰à¤¤à¥à¤ªà¤¾à¤¦ à¤•à¤¾ à¤¨à¤¾à¤®",
+        hindi: "à¤¹à¤¿à¤‚à¤¦à¥€ à¤¨à¤¾à¤®",
+        category: "à¤•à¥ˆà¤Ÿà¥‡à¤—à¤°à¥€",
+        listingType: "à¤²à¤¿à¤¸à¥à¤Ÿà¤¿à¤‚à¤— à¤Ÿà¤¾à¤‡à¤ª",
+        variety: "à¤•à¤¿à¤¸à¥à¤®",
+        quantity: "à¤®à¤¾à¤¤à¥à¤°à¤¾",
+        price: "à¤ªà¥à¤°à¤¤à¤¿ à¤•à¤¿à¤²à¥‹ à¤•à¥€à¤®à¤¤",
+        location: "à¤¸à¥à¤¥à¤¾à¤¨",
+        image: "à¤‰à¤¤à¥à¤ªà¤¾à¤¦ à¤•à¥€ à¤›à¤µà¤¿",
+        selectCategory: "à¤•à¥ˆà¤Ÿà¥‡à¤—à¤°à¥€ à¤šà¥à¤¨à¥‡à¤‚",
+        selectType: "à¤²à¤¿à¤¸à¥à¤Ÿà¤¿à¤‚à¤— à¤Ÿà¤¾à¤‡à¤ª à¤šà¥à¤¨à¥‡à¤‚",
+        submit: "à¤œà¤®à¤¾ à¤•à¤°à¥‡à¤‚",
+        submitting: "à¤œà¤®à¤¾ à¤¹à¥‹ à¤°à¤¹à¤¾ à¤¹à¥ˆ...",
+        validation: "à¤•à¥ƒà¤ªà¤¯à¤¾ à¤œà¤°à¥‚à¤°à¥€ à¤«à¤¼à¥€à¤²à¥à¤¡ à¤­à¤°à¥‡à¤‚",
+        created: "à¤²à¤¿à¤¸à¥à¤Ÿà¤¿à¤‚à¤— à¤¬à¤¨ à¤—à¤ˆ!",
+        error: "à¤•à¥à¤› à¤—à¤²à¤¤ à¤¹à¥‹ à¤—à¤¯à¤¾!",
+        suggestion: "à¤¹à¤¿à¤‚à¤¦à¥€ à¤¸à¥à¤à¤¾à¤µ",
+        useSuggestion: "à¤à¤¹ à¤ªà¥à¤°à¤¾ à¤•à¤°à¥‡à¤‚",
       }
     : {
         title: "Create Listing",
-        buy: "I Want to Buy",
-        sell: "I Want to Sell",
         name: "Product Name",
         hindi: "Hindi Name",
+        category: "Category",
+        listingType: "Listing Type",
         variety: "Variety",
         quantity: "Quantity",
         price: "Price per kg",
         location: "Location",
-        seller: "Seller Name",
-        phone: "Contact Phone",
-        image: "Product Image (Selling only)",
+        image: "Product Image",
+        selectCategory: "Select Category",
+        selectType: "Select Listing Type",
         submit: "Submit",
         submitting: "Submitting...",
         validation: "Please fill required fields",
         created: "Listing created!",
         error: "Something went wrong!",
+        suggestion: "Hindi suggestion",
+        useSuggestion: "Use suggestion",
       };
-
-  const handleListingTypeChange = (listingType) => {
-    setForm({
-      ...form,
-      listing_type: listingType,
-      type: listingType.toLowerCase(),
-    });
-  };
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
 
     if (name === "image") {
-      const file = files[0];
-      setForm({ ...form, image: file });
+      const file = files?.[0] || null;
+      setForm((current) => ({ ...current, image: file }));
 
       if (file) {
         const reader = new FileReader();
@@ -82,41 +116,42 @@ function CreateListing({ initialListingType = "SELL", setListings, refreshListin
       } else {
         setImagePreview(null);
       }
-    } else {
-      setForm({ ...form, [name]: value });
+      return;
     }
+
+    setForm((current) => ({ ...current, [name]: value }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // ✅ FIXED VALIDATION
-    if (!form.name || !form.price_per_kg || !form.location) {
+    if (
+      !form.product_name ||
+      !form.category ||
+      !form.listing_type ||
+      !form.quantity ||
+      !form.price_per_kg ||
+      !form.location
+    ) {
       alert(text.validation);
-      return;
-    }
-
-    if (form.listing_type === "SELL" && !form.phone) {
-      alert("Phone is required for selling");
       return;
     }
 
     setLoading(true);
 
     const formData = new FormData();
+    formData.append("product_name", form.product_name);
+    formData.append("hindi_name", form.hindi_name);
+    formData.append("category", form.category);
+    formData.append("listing_type", form.listing_type);
+    formData.append("variety", form.variety);
+    formData.append("quantity", form.quantity);
+    formData.append("price_per_kg", form.price_per_kg);
+    formData.append("location", form.location);
 
-    Object.keys(form).forEach((key) => {
-      if (key === "image") {
-        if (form[key]) formData.append(key, form[key]);
-      } else {
-        // ✅ Clean BUY payload
-        if (form.listing_type === "BUY" && (key === "seller" || key === "phone")) {
-          formData.append(key, "");
-        } else {
-          formData.append(key, form[key]);
-        }
-      }
-    });
+    if (form.image) {
+      formData.append("image", form.image);
+    }
 
     api.post("/products/", formData, {
       headers: { "Content-Type": "multipart/form-data" },
@@ -126,25 +161,11 @@ function CreateListing({ initialListingType = "SELL", setListings, refreshListin
 
         if (refreshListings) {
           refreshListings();
-        } else {
+        } else if (setListings) {
           setListings((prev) => [res.data, ...prev]);
         }
 
-        setForm({
-          type: initialListingType.toLowerCase(),
-          listing_type: initialListingType,
-          name: "",
-          hindi: "",
-          variety: "",
-          quantity: "",
-          price_per_kg: "",
-          location: "",
-          seller: "",
-          phone: "",
-          image: null,
-          verified: false,
-        });
-
+        setForm(createInitialForm(initialListingType));
         setImagePreview(null);
         setLoading(false);
       })
@@ -160,32 +181,105 @@ function CreateListing({ initialListingType = "SELL", setListings, refreshListin
       <h2 className="text-xl font-bold mb-4">{text.title}</h2>
 
       <form onSubmit={handleSubmit} className="space-y-3">
+        <input
+          name="product_name"
+          value={form.product_name}
+          placeholder={text.name}
+          onChange={handleChange}
+          className="w-full p-2 border rounded"
+        />
 
-        {/* Toggle */}
-        <div className="grid grid-cols-2 gap-3">
-          <button type="button" onClick={() => handleListingTypeChange("BUY")}>
-            {text.buy}
-          </button>
+        <div className="space-y-2">
+          <input
+            name="hindi_name"
+            value={form.hindi_name}
+            placeholder={text.hindi}
+            onChange={handleChange}
+            className="w-full p-2 border rounded"
+          />
 
-          <button type="button" onClick={() => handleListingTypeChange("SELL")}>
-            {text.sell}
-          </button>
+          {showHindiSuggestion && (
+            <div className="flex items-center justify-between text-xs text-gray-500">
+              <span>{text.suggestion}: {suggestedHindi}</span>
+              <button
+                type="button"
+                onClick={() => setForm((current) => ({ ...current, hindi_name: suggestedHindi }))}
+                className="text-green-600"
+              >
+                {text.useSuggestion}
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* Common fields */}
-        <input name="name" value={form.name} placeholder={text.name} onChange={handleChange} className="w-full p-2 border rounded" />
-        <input name="hindi" value={form.hindi} placeholder={text.hindi} onChange={handleChange} className="w-full p-2 border rounded" />
-        <input name="variety" value={form.variety} placeholder={text.variety} onChange={handleChange} className="w-full p-2 border rounded" />
-        <input name="quantity" value={form.quantity} placeholder={text.quantity} onChange={handleChange} className="w-full p-2 border rounded" />
-        <input name="price_per_kg" value={form.price_per_kg} placeholder={text.price} onChange={handleChange} className="w-full p-2 border rounded" />
-        <input name="location" value={form.location} placeholder={text.location} onChange={handleChange} className="w-full p-2 border rounded" />
+        <select
+          name="category"
+          value={form.category}
+          onChange={handleChange}
+          className="w-full p-2 border rounded"
+        >
+          <option value="">{text.selectCategory}</option>
+          {CATEGORY_OPTIONS.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
 
-        {/* SELL ONLY */}
-        {form.listing_type === "SELL" && (
-          <>
-            <input name="seller" value={form.seller} placeholder={text.seller} onChange={handleChange} className="w-full p-2 border rounded" />
-            <input name="phone" value={form.phone} placeholder={text.phone} onChange={handleChange} className="w-full p-2 border rounded" />
-          </>
+        <select
+          name="listing_type"
+          value={form.listing_type}
+          onChange={handleChange}
+          className="w-full p-2 border rounded"
+        >
+          <option value="">{text.selectType}</option>
+          <option value="BUY">Buy</option>
+          <option value="SELL">Sell</option>
+        </select>
+
+        <input
+          name="variety"
+          value={form.variety}
+          placeholder={text.variety}
+          onChange={handleChange}
+          className="w-full p-2 border rounded"
+        />
+        <input
+          type="number"
+          name="quantity"
+          value={form.quantity}
+          placeholder={text.quantity}
+          onChange={handleChange}
+          className="w-full p-2 border rounded"
+        />
+        <input
+          type="number"
+          step="0.01"
+          name="price_per_kg"
+          value={form.price_per_kg}
+          placeholder={text.price}
+          onChange={handleChange}
+          className="w-full p-2 border rounded"
+        />
+        <input
+          name="location"
+          value={form.location}
+          placeholder={text.location}
+          onChange={handleChange}
+          className="w-full p-2 border rounded"
+        />
+        <input
+          type="file"
+          name="image"
+          accept="image/*"
+          onChange={handleChange}
+          className="w-full p-2 border rounded"
+        />
+
+        {imagePreview && (
+          <div className="overflow-hidden rounded border">
+            <img src={imagePreview} alt={form.product_name || text.image} className="w-full object-cover" />
+          </div>
         )}
 
         <button className="bg-green-600 text-white px-4 py-2 rounded w-full">

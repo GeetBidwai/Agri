@@ -11,6 +11,7 @@ import CreateListing from "./components/CreateListing";
 import AuthPage from "./components/AuthPage";
 import ContactsPage from "./components/ContactsPage";
 import ProfilePage from "./components/ProfilePage";
+import VerifyAccount from "./components/VerifyAccount";
 import MandiPrices from "./pages/MandiPrices";
 import BidModal from "./components/BidModal";
 import ProductBidsPage from "./pages/ProductBidsPage";
@@ -29,6 +30,10 @@ const getRouteFromHash = () => {
 
   if (hash === "#/profile") {
     return { page: "profile" };
+  }
+
+  if (hash === "#/verify-account") {
+    return { page: "verify-account" };
   }
 
   if (hash === "#/mandi-prices") {
@@ -85,6 +90,7 @@ function App() {
     const savedUser = localStorage.getItem("authUser");
     return savedUser ? JSON.parse(savedUser) : null;
   });
+  const [verificationStatus, setVerificationStatus] = useState("not_submitted");
 
   const [bidModalProduct, setBidModalProduct] = useState(null);
 
@@ -98,6 +104,7 @@ function App() {
       login: "#/login",
       signup: "#/signup",
       profile: "#/profile",
+      "verify-account": "#/verify-account",
       create: "#/create/sell",
       "mandi-prices": "#/mandi-prices",
     };
@@ -150,7 +157,7 @@ function App() {
       const nextRoute = getRouteFromHash();
 
       // Protect authenticated routes without adding a router dependency
-      if ((nextRoute.page === "create" || nextRoute.page === "profile") && !localStorage.getItem("authToken")) {
+      if ((nextRoute.page === "create" || nextRoute.page === "profile" || nextRoute.page === "verify-account") && !localStorage.getItem("authToken")) {
         window.location.hash = "#/login";
         return;
       }
@@ -185,6 +192,22 @@ function App() {
     localStorage.setItem("siteLanguage", language);
   }, [language]);
 
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setVerificationStatus("not_submitted");
+      return;
+    }
+
+    api.get("/verification-status/")
+      .then((res) => {
+        setVerificationStatus(res.data.verification_status || "not_submitted");
+      })
+      .catch((err) => {
+        console.error("Failed to fetch verification status:", err);
+        setVerificationStatus("not_submitted");
+      });
+  }, [isAuthenticated, user?.id]);
+
   const handleAuthSuccess = (nextUser) => {
     setUser(nextUser);
     navigate("home");
@@ -206,6 +229,7 @@ function App() {
       <Navbar
         isAuthenticated={isAuthenticated}
         username={user?.username}
+        verificationStatus={verificationStatus}
         onNavigate={navigate}
         onLogout={handleLogout}
         language={language}
@@ -246,6 +270,13 @@ function App() {
 
       {route.page === "profile" && (
         <ProfilePage language={language} />
+      )}
+
+      {route.page === "verify-account" && (
+        <VerifyAccount
+          language={language}
+          onStatusChange={(data) => setVerificationStatus(data?.verification_status || "not_submitted")}
+        />
       )}
 
       {route.page === "mandi-prices" && (

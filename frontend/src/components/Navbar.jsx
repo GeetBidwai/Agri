@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 function Navbar({
   isAuthenticated,
   username,
+  verificationStatus,
   onNavigate,
   onLogout,
   language,
@@ -22,29 +23,40 @@ function Navbar({
       logout: "Logout",
       signIn: "Sign In",
       myProfile: "My Profile",
+      verifyAccount: "Verify Account",
+      verificationPending: "Verification Pending",
+      verifiedSeller: "Verified Seller",
       language: "Language",
       english: "English",
       hindi: "Hindi",
       hello: "Hi",
     },
     HI: {
-      home: "होम",
-      buy: "खरीदें",
-      sell: "बेचें",
-      mandiPrices: "मंडी भाव",
+      home: "à¤¹à¥‹à¤®",
+      buy: "à¤–à¤°à¥€à¤¦à¥‡à¤‚",
+      sell: "à¤¬à¥‡à¤šà¥‡à¤‚",
+      mandiPrices: "à¤®à¤‚à¤¡à¥€ à¤­à¤¾à¤µ",
       languageButton: "English",
-      postListing: "लिस्टिंग पोस्ट करें",
-      logout: "लॉगआउट",
-      signIn: "साइन इन",
-      myProfile: "मेरी प्रोफाइल",
-      language: "भाषा",
+      postListing: "à¤²à¤¿à¤¸à¥à¤Ÿà¤¿à¤‚à¤— à¤ªà¥‹à¤¸à¥à¤Ÿ à¤•à¤°à¥‡à¤‚",
+      logout: "à¤²à¥‰à¤—à¤†à¤‰à¤Ÿ",
+      signIn: "à¤¸à¤¾à¤‡à¤¨ à¤‡à¤¨",
+      myProfile: "à¤®à¥‡à¤°à¥€ à¤ªà¥à¤°à¥‹à¤«à¤¾à¤‡à¤²",
+      verifyAccount: "Verify Account",
+      verificationPending: "Verification Pending",
+      verifiedSeller: "Verified Seller",
+      language: "à¤­à¤¾à¤·à¤¾",
       english: "English",
-      hindi: "हिंदी",
-      hello: "नमस्ते",
+      hindi: "à¤¹à¤¿à¤‚à¤¦à¥€",
+      hello: "à¤¨à¤®à¤¸à¥à¤¤à¥‡",
     },
   };
 
   const text = copy[language];
+  const verificationLabel = verificationStatus === "approved"
+    ? text.verifiedSeller
+    : verificationStatus === "pending"
+      ? text.verificationPending
+      : text.verifyAccount;
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -133,6 +145,18 @@ function Navbar({
                 <button
                   type="button"
                   onClick={() => {
+                    setMenuOpen(false);
+                    onNavigate("verify-account");
+                  }}
+                  className="block w-full px-4 py-3 text-left text-sm hover:bg-gray-50"
+                >
+                  {verificationLabel}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuOpen(false);
                     onToggleLanguage();
                   }}
                   className="block w-full px-4 py-3 text-left text-sm hover:bg-gray-50"
@@ -142,7 +166,10 @@ function Navbar({
 
                 <button
                   type="button"
-                  onClick={onLogout}
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onLogout();
+                  }}
                   className="block w-full px-4 py-3 text-left text-sm text-red-600 hover:bg-red-50"
                 >
                   {text.logout}

@@ -7,6 +7,24 @@ from .models import Product, UserProfile, Bid
 from .serializers import ProductSerializer, ProductContactSerializer, BidSerializer
 
 
+def perform_create(serializer, request):
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    phone = profile.phone
+
+    product_name = serializer.validated_data.get("product_name") or serializer.validated_data.get("name", "")
+    hindi_name = serializer.validated_data.get("hindi_name") or serializer.validated_data.get("hindi", "")
+
+    serializer.save(
+        user=request.user,
+        seller=request.user.username,
+        contact_phone=phone,
+        product_name=product_name,
+        name=product_name,
+        hindi_name=hindi_name,
+        hindi=hindi_name,
+    )
+
+
 @api_view(['GET', 'POST'])
 def get_products(request):
     # GET -> fetch data
@@ -28,7 +46,7 @@ def get_products(request):
         if category_query:
             products = products.filter(category__iexact=category_query)
 
-        serializer = ProductSerializer(products, many=True)
+        serializer = ProductSerializer(products, many=True, context={"request": request})
         return Response(serializer.data)
 
     # POST -> create new product
@@ -41,7 +59,6 @@ def get_products(request):
 
         payload = request.data.copy()
         listing_type = payload.get('listing_type')
-        phone = str(payload.get('phone', '')).strip()
 
         # Keep old and new fields in sync so existing UI logic continues to work
         if listing_type:
@@ -50,19 +67,28 @@ def get_products(request):
         elif payload.get('type'):
             payload['listing_type'] = str(payload['type']).upper()
 
-        # Save contact phone on the user's profile so View Contact can show it later
-        if phone:
-            profile, _ = UserProfile.objects.get_or_create(user=request.user)
-            profile.phone = phone
-            profile.save(update_fields=['phone'])
+        if payload.get('product_name') and not payload.get('name'):
+            payload['name'] = payload['product_name']
+        elif payload.get('name') and not payload.get('product_name'):
+            payload['product_name'] = payload['name']
 
+        if payload.get('hindi_name') and not payload.get('hindi'):
+            payload['hindi'] = payload['hindi_name']
+        elif payload.get('hindi') and not payload.get('hindi_name'):
+            payload['hindi_name'] = payload['hindi']
+
+        payload.pop('seller', None)
         payload.pop('phone', None)
-        payload['user'] = request.user.id
-        serializer = ProductSerializer(data=payload)
+        payload.pop('contact_phone', None)
+
+        serializer = ProductSerializer(data=payload, context={"request": request})
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors)
+            perform_create(serializer, request)
+            return Response(
+                ProductSerializer(serializer.instance, context={"request": request}).data,
+                status=status.HTTP_201_CREATED,
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["GET"])

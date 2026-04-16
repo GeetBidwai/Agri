@@ -14,7 +14,52 @@ class UserProfile(models.Model):
         return f"{self.user.username} profile"
 
 
+class SellerVerification(models.Model):
+    SELLER_TYPE_CHOICES = [
+        ("farmer", "Farmer"),
+        ("trader", "Trader"),
+        ("wholesaler", "Wholesaler"),
+        ("retailer", "Retailer"),
+    ]
+
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("approved", "Approved"),
+        ("rejected", "Rejected"),
+    ]
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="seller_verifications",
+    )
+    full_name = models.CharField(max_length=150)
+    aadhaar_number = models.CharField(max_length=32)
+    aadhaar_front_image = models.ImageField(upload_to="verification/")
+    aadhaar_back_image = models.ImageField(upload_to="verification/")
+    selfie_image = models.ImageField(upload_to="verification/", null=True, blank=True)
+    address = models.TextField()
+    seller_type = models.CharField(max_length=20, choices=SELLER_TYPE_CHOICES)
+    verification_status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+    is_verified = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} verification ({self.verification_status})"
+
+
 class Product(models.Model):
+    CATEGORY_CHOICES = [
+        ('Grains', 'Grains'),
+        ('Pulses', 'Pulses'),
+        ('Spices', 'Spices'),
+        ('Oilseeds', 'Oilseeds'),
+        ('Vegetables', 'Vegetables'),
+        ('Fruits', 'Fruits'),
+        ('Cotton', 'Cotton'),
+        ('Sugar', 'Sugar'),
+    ]
+
     LISTING_TYPE_CHOICES = [
         ('SELL', 'Sell'),
         ('BUY', 'Buy'),
@@ -35,7 +80,9 @@ class Product(models.Model):
     )
 
     name = models.CharField(max_length=100)
+    product_name = models.CharField(max_length=100, blank=True, default="")
     hindi = models.CharField(max_length=100, blank=True)
+    hindi_name = models.CharField(max_length=100, blank=True, default="")
     variety = models.CharField(max_length=100, blank=True)
 
     quantity = models.IntegerField()  # changed to numeric
@@ -44,10 +91,16 @@ class Product(models.Model):
 
     location = models.CharField(max_length=100)
     seller = models.CharField(max_length=100)
+    contact_phone = models.CharField(max_length=20, blank=True, default="")
 
-    category = models.CharField(max_length=50, blank=True, null=True)
+    category = models.CharField(
+        max_length=50,
+        choices=CATEGORY_CHOICES,
+        blank=True,
+        null=True,
+    )
 
-    image = models.ImageField(upload_to='products/', null=True, blank=True)
+    image = models.ImageField(upload_to='listings/', null=True, blank=True)
 
     is_verified = models.BooleanField(default=False)
 

@@ -1,6 +1,8 @@
 function ListingCard({ item, onNavigateToContact, onPlaceBid, onViewBids, language }) {
   const listingType = item.listing_type || item.type?.toUpperCase();
   const isTrusted = item.is_verified || item.verified;
+  const displayName = item.product_name || item.name;
+  const displayHindiName = item.hindi_name || item.hindi;
 
   const text = language === "HI"
     ? {
@@ -56,14 +58,14 @@ function ListingCard({ item, onNavigateToContact, onPlaceBid, onViewBids, langua
         <div className="mt-4 aspect-video w-full overflow-hidden rounded-xl border border-gray-100">
           <img
             src={item.image}
-            alt={item.name}
+            alt={displayName}
             className="h-full w-full object-cover transition-transform hover:scale-105"
           />
         </div>
       )}
 
       <h3 className="mt-2 font-bold text-lg">
-        {item.name} <span className="text-gray-400 text-sm">{item.hindi}</span>
+        {displayName} <span className="text-gray-400 text-sm">{displayHindiName}</span>
       </h3>
 
       <p className="text-sm text-gray-500">{item.variety}</p>
