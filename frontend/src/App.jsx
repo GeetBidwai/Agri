@@ -265,10 +265,16 @@ function App() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("authUser");
-    setUser(null);
-    navigate("home");
+    api.post("/auth/logout/")
+      .catch((err) => {
+        console.error("Failed to log out from server:", err);
+      })
+      .finally(() => {
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("authUser");
+        setUser(null);
+        navigate("home");
+      });
   };
 
   const handlePlaceBid = (product) => {

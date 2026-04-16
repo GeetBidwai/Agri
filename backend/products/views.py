@@ -1,11 +1,14 @@
-from rest_framework.decorators import api_view
+from django.db import IntegrityError
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 
-from .models import Product, Bid
+from .models import ListingReport, Product, Bid
 from .permissions import get_or_create_profile, is_seller
-from .serializers import ProductSerializer, ProductContactSerializer, BidSerializer
+from .serializers import ProductSerializer, ProductContactSerializer, BidSerializer, ListingReportSerializer
 
 
 def perform_create(serializer, request):
@@ -106,10 +109,30 @@ def get_products(request):
 
 
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
+@authentication_classes([TokenAuthentication])
 def get_product_contact(request, product_id):
     product = get_object_or_404(Product, pk=product_id)
     serializer = ProductContactSerializer(product)
     return Response(serializer.data)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+@authentication_classes([TokenAuthentication])
+def report_product(request, product_id):
+    product = get_object_or_404(Product, pk=product_id)
+    serializer = ListingReportSerializer(data=request.data)
+
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        serializer.save(product=product, reporter=request.user)
+    except IntegrityError:
+        return Response({"detail": "Already reported"}, status=status.HTTP_400_BAD_REQUEST)
+
+    return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 @api_view(['GET', 'POST'])
@@ -122,6 +145,11 @@ def manage_bids(request, product_id):
         return Response(serializer.data)
 
     if request.method == 'POST':
+        if not request.user or not request.user.is_authenticated:
+            return Response(
+                {"detail": "Authentication credentials were not provided."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
         payload = request.data.copy()
         payload['product'] = product.id
         serializer = BidSerializer(data=payload)

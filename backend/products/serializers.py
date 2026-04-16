@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Product, Bid, SellerKYC, SellerVerification
+from .models import ListingReport, Product, Bid, SellerKYC, SellerVerification
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -165,4 +165,13 @@ class SellerKYCSerializer(serializers.ModelSerializer):
             "user",
             "status",
             "created_at",
+        ]
+
+
+class ListingReportSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ListingReport
+        fields = [
+            "product",
+            "reason",
         ]

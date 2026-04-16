@@ -1,26 +1,41 @@
 # Agri
 
-Agri is a full-stack agricultural marketplace app with a React frontend and a Django REST backend. Users can browse crop listings, filter buy and sell offers, sign up, create listings, view seller contact details, and place bids on products.
+Agri is a full-stack agricultural marketplace app built with a React frontend and a Django REST backend. It supports listing discovery, buyer-seller role flow, bidding, contact reveal, seller verification surfaces, bilingual UI, and suspicious listing reporting.
 
 ## Stack
 
 - Frontend: React 19, Vite 8, Tailwind CSS, Axios
-- Backend: Django 6, Django REST Framework, token authentication, django-cors-headers
-- Database: SQLite
-- Media uploads: Pillow-backed image uploads for product photos
+- Backend: Django 6, Django REST Framework, DRF token authentication, django-cors-headers
+- Database: SQLite for local development
+- Media uploads: Pillow-backed image uploads for listings and seller verification files
 
-## Features
+## What The Project Currently Does
 
-- Browse the latest agricultural listings
+- Browse listings
 - Filter listings by `BUY` and `SELL`
-- Search listings by product name
-- Explore category pages
-- User signup, login, and profile view
-- Create authenticated listings with optional product image upload
-- Save seller phone number to the user profile for contact sharing
-- View listing contact details
-- Place bids and view bids for a product
-- Hindi and English UI toggle in the frontend
+- Search by product name
+- Filter by category, location, and max price
+- View category pages
+- Sign up, log in, log out, and fetch the current profile
+- Store and use buyer/seller role in the frontend
+- Restrict seller-only UI and seller-only routes
+- Let sellers create listings
+- Let authenticated users reveal seller contact details
+- Let users place bids and view bids
+- Let authenticated users report suspicious listings
+- Support Hindi / English UI toggling
+
+## What We Changed In This Project
+
+- Added buyer/seller role-aware signup support and seller redirect flow
+- Added seller-only frontend access control for create listing, seller dashboard, KYC, and verification views
+- Added backend seller permission checks for listing creation and seller verification-related endpoints
+- Added token-based logout endpoint and frontend logout call
+- Protected contact reveal behind authentication
+- Protected product bid posting behind authentication and switched bid modal to the authenticated bid endpoint
+- Added listing reporting with duplicate-report protection
+- Tightened development CORS settings and made `SECRET_KEY` / `DEBUG` environment-aware
+- Fixed broken Hindi and icon rendering issues in the affected frontend components
 
 ## Project Structure
 
@@ -59,14 +74,21 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-3. Move into the backend folder and apply migrations.
+3. Set local environment variables if desired.
+
+```powershell
+$env:DJANGO_SECRET_KEY="dev-insecure-key-change"
+$env:DJANGO_DEBUG="1"
+```
+
+4. Apply migrations.
 
 ```powershell
 cd backend
 python manage.py migrate
 ```
 
-4. Start the Django development server.
+5. Start the backend server.
 
 ```powershell
 python manage.py runserver
@@ -82,7 +104,7 @@ The backend runs at `http://127.0.0.1:8000/`.
 cd frontend
 ```
 
-2. Install Node dependencies.
+2. Install dependencies.
 
 ```powershell
 npm install
@@ -96,13 +118,15 @@ npm run dev
 
 The frontend usually runs at `http://127.0.0.1:5173/`.
 
-## Development Notes
+## Environment Notes
 
-- The frontend API client is hardcoded to `http://127.0.0.1:8000/api`.
-- Product images are served from Django media storage during development.
-- CORS is currently open for all origins in development.
-- Authentication uses DRF token auth and stores the token in browser local storage.
-- The app uses hash-based navigation instead of React Router.
+- The frontend API client points to `http://127.0.0.1:8000/api`
+- Allowed frontend origins are currently:
+  - `http://localhost:5173`
+  - `http://127.0.0.1:5173`
+- Authentication uses DRF token auth
+- Tokens are currently stored in browser local storage
+- The app uses hash-based navigation instead of React Router
 
 ## Useful Commands
 
@@ -129,19 +153,40 @@ python manage.py test
 
 - `POST /api/auth/signup/`
 - `POST /api/auth/login/`
+- `POST /api/auth/logout/`
 - `GET /api/auth/me/`
 
-### Products
+### Product APIs
 
 - `GET /api/products/`
 - `POST /api/products/`
 - `GET /api/products/<product_id>/contact/`
+- `POST /api/products/<product_id>/report/`
 - `GET /api/products/<product_id>/bids/`
 - `POST /api/products/<product_id>/bids/`
 
-## Current State
+### Marketplace APIs
 
-- Frontend lint passes
-- Frontend production build passes
+- `POST /api/listings/create/`
+- `GET /api/listings/`
+- `GET /api/listings/<listing_id>/`
+- `POST /api/bids/place/`
+- `POST /api/kyc/upload/`
+- `GET /api/kyc/status/`
+- `POST /api/verify-seller/`
+- `GET /api/verification-status/`
+
+## Python Dependencies
+
+- Django
+- djangorestframework
+- django-cors-headers
+- Pillow
+
+## Status
+
 - Django system check passes
-- Automated backend tests have not been added yet
+- Frontend production build passes
+- Listing report flow is connected
+- Role-based seller flow is connected
+- The previously broken category icons / Hindi text rendering has been corrected

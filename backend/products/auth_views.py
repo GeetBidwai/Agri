@@ -1,7 +1,8 @@
 from django.contrib.auth import authenticate, get_user_model
 from rest_framework import status
+from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.models import Token
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
@@ -99,3 +100,11 @@ def me(request):
             "listing_count": Product.objects.filter(user=request.user).count(),
         }
     )
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+@authentication_classes([TokenAuthentication])
+def logout(request):
+    request.auth.delete()
+    return Response({"detail": "Logged out"}, status=204)

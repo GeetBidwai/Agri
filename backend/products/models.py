@@ -173,6 +173,26 @@ class Product(models.Model):
         return f"{self.name} ({self.listing_type})"
 
 
+class ListingReport(models.Model):
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name="reports",
+    )
+    reporter = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
+    reason = models.TextField(default="Suspicious listing")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("product", "reporter")
+
+    def __str__(self):
+        return f"Report for {self.product_id} by {self.reporter_id}"
+
+
 class Bid(models.Model):
     product = models.ForeignKey(
         Product,

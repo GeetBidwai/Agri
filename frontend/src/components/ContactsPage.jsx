@@ -6,6 +6,7 @@ function ContactsPage({ productId, listing, onNavigate, language }) {
   const [contact, setContact] = useState(null);
   const [showPhone, setShowPhone] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState("");
 
   const text = language === "HI"
     ? {
@@ -45,14 +46,27 @@ function ContactsPage({ productId, listing, onNavigate, language }) {
       };
 
   useEffect(() => {
+    const token = localStorage.getItem("authToken");
+
+    if (!token) {
+      setMessage("Please login to view contact");
+      setLoading(false);
+      onNavigate("login");
+      return;
+    }
+
     api.get(`/products/${productId}/contact/`)
-      .then((res) => setContact(res.data))
+      .then((res) => {
+        setContact(res.data);
+        setMessage("");
+      })
       .catch((err) => {
         console.error(err);
         setContact(null);
+        setMessage(err.response?.data?.detail || "");
       })
       .finally(() => setLoading(false));
-  }, [productId]);
+  }, [productId, onNavigate]);
 
   return (
     <section className="bg-gray-50 py-14 px-6 min-h-[calc(100vh-4rem)]">
@@ -99,6 +113,10 @@ function ContactsPage({ productId, listing, onNavigate, language }) {
               {text.report}
             </button>
           </div>
+
+          {message && (
+            <p className="mt-4 text-sm text-red-600">{message}</p>
+          )}
 
           {showPhone && !loading && (
             <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">

@@ -1,3 +1,5 @@
+import api from "../api";
+
 function ListingCard({ item, onNavigateToContact, onPlaceBid, onViewBids, language }) {
   const listingType = item.listing_type || item.type?.toUpperCase();
   const isTrusted = item.seller_verified || item.is_verified || item.verified;
@@ -7,20 +9,20 @@ function ListingCard({ item, onNavigateToContact, onPlaceBid, onViewBids, langua
 
   const text = language === "HI"
     ? {
-        forSale: "बिक्री के लिए",
-        wanted: "जरूरत है",
-        verified: "सत्यापित",
-        verifiedListing: "सत्यापित लिस्टिंग",
-        qty: "मात्रा",
-        location: "स्थान",
-        date: "तारीख",
-        recentlyAdded: "अभी जोड़ी गई",
-        warning: "अग्रिम भुगतान न करें",
-        report: "रिपोर्ट करें",
-        viewContact: "संपर्क देखें",
-        placeBid: "बोली लगाएं",
-        viewBids: "बोलियां देखें",
-        notSpecified: "उल्लेख नहीं",
+        forSale: "\u092c\u093f\u0915\u094d\u0930\u0940 \u0915\u0947 \u0932\u093f\u090f",
+        wanted: "\u091c\u093c\u0930\u0942\u0930\u0924 \u0939\u0948",
+        verified: "\u0938\u0924\u094d\u092f\u093e\u092a\u093f\u0924",
+        verifiedListing: "\u0938\u0924\u094d\u092f\u093e\u092a\u093f\u0924 \u0932\u093f\u0938\u094d\u091f\u093f\u0902\u0917",
+        qty: "\u092e\u093e\u0924\u094d\u0930\u093e",
+        location: "\u0938\u094d\u0925\u093e\u0928",
+        date: "\u0924\u093e\u0930\u0940\u0916",
+        recentlyAdded: "\u0905\u092d\u0940 \u091c\u094b\u0921\u093c\u0940 \u0917\u0908",
+        warning: "\u0905\u0917\u094d\u0930\u093f\u092e \u092d\u0941\u0917\u0924\u093e\u0928 \u0928 \u0915\u0930\u0947\u0902",
+        report: "\u0930\u093f\u092a\u094b\u0930\u094d\u091f \u0915\u0930\u0947\u0902",
+        viewContact: "\u0938\u0902\u092a\u0930\u094d\u0915 \u0926\u0947\u0916\u0947\u0902",
+        placeBid: "\u092c\u094b\u0932\u0940 \u0932\u0917\u093e\u090f\u0902",
+        viewBids: "\u092c\u094b\u0932\u093f\u092f\u093e\u0902 \u0926\u0947\u0916\u0947\u0902",
+        notSpecified: "\u0909\u0932\u094d\u0932\u0947\u0916 \u0928\u0939\u0940\u0902",
       }
     : {
         forSale: "FOR SALE",
@@ -38,6 +40,16 @@ function ListingCard({ item, onNavigateToContact, onPlaceBid, onViewBids, langua
         viewBids: "View Bids",
         notSpecified: "Not specified",
       };
+
+  const handleReport = async () => {
+    try {
+      await api.post(`/products/${item.id}/report/`, { reason: "Suspicious listing" });
+      alert("Reported successfully");
+    } catch (error) {
+      console.error(error);
+      alert("Already reported");
+    }
+  };
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-5 hover:shadow-md transition-all">
@@ -96,7 +108,7 @@ function ListingCard({ item, onNavigateToContact, onPlaceBid, onViewBids, langua
         <div className="flex gap-2">
           <button
             type="button"
-            onClick={() => alert("Report feature will be connected soon.")}
+            onClick={handleReport}
             className="border border-red-200 bg-red-50 px-3 py-1 rounded-lg text-xs text-red-600"
           >
             {text.report}

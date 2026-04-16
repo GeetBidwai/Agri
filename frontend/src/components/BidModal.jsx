@@ -4,6 +4,7 @@ import api from "../api";
 import { formatPricePerKg } from "../utils/price";
 
 function BidModal({ product, onClose, language }) {
+  const token = localStorage.getItem("authToken");
   const [form, setForm] = useState({
     buyer_name: "",
     buyer_phone: "",
@@ -48,6 +49,11 @@ function BidModal({ product, onClose, language }) {
     e.preventDefault();
     setError("");
 
+    if (!token) {
+      setError("Please login to place a bid.");
+      return;
+    }
+
     if (!form.buyer_name || !form.buyer_phone || !form.bid_price || !form.quantity) {
       setError(text.error);
       return;
@@ -55,7 +61,11 @@ function BidModal({ product, onClose, language }) {
 
     setLoading(true);
 
-    api.post(`/products/${product.id}/bids/`, form)
+    api.post("/bids/place/", {
+      listing_id: product.id,
+      bid_price: form.bid_price,
+      quantity: form.quantity,
+    })
       .then(() => {
         alert(text.success);
         onClose();
@@ -89,6 +99,18 @@ function BidModal({ product, onClose, language }) {
             <p className="text-green-600 font-bold">Listed: {formatPricePerKg(product.price_per_kg)}</p>
           </div>
 
+          {!token ? (
+            <div className="space-y-4">
+              <p className="text-sm text-red-600">Please login to place a bid.</p>
+              <button
+                type="button"
+                onClick={onClose}
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                {text.close}
+              </button>
+            </div>
+          ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">{text.name}</label>
@@ -157,6 +179,7 @@ function BidModal({ product, onClose, language }) {
               </button>
             </div>
           </form>
+          )}
         </div>
       </div>
     </div>
