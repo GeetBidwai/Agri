@@ -173,9 +173,28 @@ function VerifyAccount({ language, onStatusChange }) {
               <form onSubmit={handleSubmit} className="mt-6 space-y-4">
                 <input name="full_name" value={form.full_name} placeholder={text.fullName} onChange={handleChange} className="w-full rounded-xl border border-gray-200 p-3" />
                 <input name="aadhaar_number" value={form.aadhaar_number} placeholder={text.aadhaar} onChange={handleChange} className="w-full rounded-xl border border-gray-200 p-3" />
-                <input type="file" name="aadhaar_front_image" accept="image/*" onChange={handleChange} className="w-full rounded-xl border border-gray-200 p-3" />
-                <input type="file" name="aadhaar_back_image" accept="image/*" onChange={handleChange} className="w-full rounded-xl border border-gray-200 p-3" />
-                <input type="file" name="selfie_image" accept="image/*" onChange={handleChange} className="w-full rounded-xl border border-gray-200 p-3" />
+                
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-gray-700 ml-1">
+                    {language === "HI" ? "आधार कार्ड (फ्रंट)" : "Aadhaar Card (Front)"}
+                  </label>
+                  <input type="file" name="aadhaar_front_image" accept="image/*" onChange={handleChange} className="w-full rounded-xl border border-gray-200 p-3" />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-gray-700 ml-1">
+                    {language === "HI" ? "आधार कार्ड (बैक)" : "Aadhaar Card (Back)"}
+                  </label>
+                  <input type="file" name="aadhaar_back_image" accept="image/*" onChange={handleChange} className="w-full rounded-xl border border-gray-200 p-3" />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-gray-700 ml-1">
+                    {language === "HI" ? "आधार के साथ सेल्फी" : "Selfie with Aadhaar"}
+                  </label>
+                  <input type="file" name="selfie_image" accept="image/*" onChange={handleChange} className="w-full rounded-xl border border-gray-200 p-3" />
+                </div>
+
                 <textarea name="address" value={form.address} placeholder={text.address} onChange={handleChange} rows="4" className="w-full rounded-xl border border-gray-200 p-3" />
                 <select name="seller_type" value={form.seller_type} onChange={handleChange} className="w-full rounded-xl border border-gray-200 p-3">
                   <option value="">{text.selectSellerType}</option>

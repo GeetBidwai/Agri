@@ -35,6 +35,12 @@ def verify_seller(request):
         is_verified=False,
     )
 
+    # Explicitly update the user's kyc_status to "pending" on the profile
+    profile = getattr(request.user, "profile", None)
+    if profile:
+        profile.kyc_status = "pending"
+        profile.save(update_fields=["kyc_status"])
+
     return Response(
         SellerVerificationSerializer(verification, context={"request": request}).data,
         status=status.HTTP_201_CREATED,

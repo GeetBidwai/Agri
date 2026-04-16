@@ -17,6 +17,11 @@ function ProfilePage({ language, showSellerKyc = false }) {
         role: "भूमिका",
         verified: "सत्यापित विक्रेता",
         notVerified: "सत्यापित नहीं",
+        kycStatus: "सत्यापन स्थिति",
+        not_started: "⚪ शुरू नहीं हुआ",
+        pending: "⏳ सत्यापन लंबित",
+        verified_status: "✅ सत्यापित विक्रेता",
+        rejected: "❌ सत्यापन अस्वीकृत",
         loading: "लोड हो रहा है...",
         unavailable: "उपलब्ध नहीं",
       }
@@ -29,6 +34,11 @@ function ProfilePage({ language, showSellerKyc = false }) {
         role: "Role",
         verified: "Verified Seller",
         notVerified: "Not verified",
+        kycStatus: "Verification Status",
+        not_started: "⚪ Not Started",
+        pending: "⏳ Pending Verification",
+        verified_status: "✅ Verified Seller",
+        rejected: "❌ Verification Rejected",
         loading: "Loading...",
         unavailable: "Not available",
       };
@@ -50,6 +60,7 @@ function ProfilePage({ language, showSellerKyc = false }) {
           phone: res.data.phone,
           role: res.data.role,
           is_verified: res.data.is_verified,
+          kyc_status: res.data.kyc_status,
         }));
       })
       .catch((err) => {
@@ -100,9 +111,20 @@ function ProfilePage({ language, showSellerKyc = false }) {
                 <p className="mt-2 text-lg font-semibold text-gray-900">
                   {localizedRole}
                 </p>
-                <p className="mt-2 text-xs text-teal-600">
-                  {profile?.is_verified ? text.verified : text.notVerified}
-                </p>
+                <div className="mt-2">
+                  <p className="text-xs text-gray-500 uppercase tracking-wider">{text.kycStatus}</p>
+                  <p className={`text-xs font-bold mt-1 ${
+                    profile?.kyc_status === "verified" ? "text-green-600" :
+                    profile?.kyc_status === "pending" ? "text-yellow-600" :
+                    profile?.kyc_status === "rejected" ? "text-red-600" :
+                    "text-gray-400"
+                  }`}>
+                    {profile?.kyc_status === "verified" ? text.verified_status :
+                     profile?.kyc_status === "pending" ? text.pending :
+                     profile?.kyc_status === "rejected" ? text.rejected :
+                     text.not_started}
+                  </p>
+                </div>
               </div>
             </div>
 

@@ -250,6 +250,7 @@ function App() {
           phone: res.data.phone,
           role: res.data.role,
           is_verified: res.data.is_verified,
+          kyc_status: res.data.kyc_status,
         };
         setUser(nextUser);
         localStorage.setItem("authUser", JSON.stringify(nextUser));
@@ -321,6 +322,8 @@ function App() {
               setListings={setListings}
               refreshListings={fetchListings}
               language={language}
+              user={user}
+              onNavigate={navigate}
             />
           </div>
         </section>

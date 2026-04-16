@@ -80,6 +80,14 @@ def get_products(request):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
+        # Check KYC verification status for sellers
+        profile = getattr(request.user, "profile", None)
+        if profile and profile.kyc_status != "verified":
+            return Response(
+                {"detail": "Please verify your account before performing this action."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         payload = request.data.copy()
         listing_type = payload.get('listing_type')
 

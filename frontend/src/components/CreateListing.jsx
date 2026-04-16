@@ -47,10 +47,12 @@ const createInitialForm = (initialListingType) => ({
   image: null,
 });
 
-function CreateListing({ initialListingType = "SELL", setListings, refreshListings, language }) {
+function CreateListing({ initialListingType = "SELL", setListings, refreshListings, language, user, onNavigate }) {
   const [form, setForm] = useState(() => createInitialForm(initialListingType));
   const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  const isVerified = user?.kyc_status === "verified";
 
   const suggestedHindi = useMemo(() => {
     const key = form.product_name.trim().toLowerCase();
@@ -83,6 +85,8 @@ function CreateListing({ initialListingType = "SELL", setListings, refreshListin
         useSuggestion: "\u092f\u0939 \u092a\u0942\u0930\u093e \u0915\u0930\u0947\u0902",
         buy: "खरीदें",
         sell: "बेचें",
+        verifyRequired: "\u0915\u0943\u092a\u092f\u093e \u0932\u093f\u0938\u094d\u091f\u093f\u0902\u0917 \u092c\u0928\u093e\u0928\u0947 \u0915\u0947 \u0932\u093f\u090f \u0905\u092a\u0928\u093e \u0916\u093e\u0924\u093e \u0938\u0924\u094d\u092f\u093e\u092a\u093f\u0924 \u0915\u0930\u0947\u0902",
+        verifyNow: "\u0905\u092d\u0940 \u0938\u0924\u094d\u092f\u093e\u092a\u093f\u0924 \u0915\u0930\u0947\u0902",
       }
     : {
         title: "Create Listing",
@@ -107,6 +111,8 @@ function CreateListing({ initialListingType = "SELL", setListings, refreshListin
         useSuggestion: "Use suggestion",
         buy: "Buy",
         sell: "Sell",
+        verifyRequired: "Please verify your account to create listings",
+        verifyNow: "Verify Now",
       };
 
   const handleChange = (e) => {
@@ -185,7 +191,25 @@ function CreateListing({ initialListingType = "SELL", setListings, refreshListin
   };
 
   return (
-    <div className="p-6 bg-white max-w-xl mx-auto mt-10 rounded-xl shadow">
+    <div className="p-6 bg-white max-w-xl mx-auto mt-10 rounded-xl shadow relative">
+      {!isVerified && (
+        <div className="absolute inset-0 z-10 bg-white/80 backdrop-blur-[2px] rounded-xl flex flex-col items-center justify-center p-6 text-center">
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-8 max-w-sm shadow-sm">
+            <div className="bg-amber-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">{text.verifyRequired}</h3>
+            <button
+              onClick={() => onNavigate("verify-account")}
+              className="mt-4 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-xl font-semibold transition-colors shadow-md"
+            >
+              {text.verifyNow}
+            </button>
+          </div>
+        </div>
+      )}
       <h2 className="text-xl font-bold mb-4">{text.title}</h2>
 
       <form onSubmit={handleSubmit} className="space-y-3">

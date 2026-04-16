@@ -16,6 +16,16 @@ class UserProfile(models.Model):
     phone = models.CharField(max_length=20, blank=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="buyer")
     is_verified = models.BooleanField(default=False)
+    kyc_status = models.CharField(
+        max_length=20,
+        choices=[
+            ("not_started", "Not Started"),
+            ("pending", "Pending"),
+            ("verified", "Verified"),
+            ("rejected", "Rejected"),
+        ],
+        default="not_started",
+    )
 
     @property
     def is_seller(self):
@@ -49,6 +59,7 @@ class SellerKYC(models.Model):
             defaults={
                 "role": "seller",
                 "is_verified": self.status == "Verified",
+                "kyc_status": "verified" if self.status == "Verified" else "pending" if self.status == "Pending" else "rejected",
             },
         )
 
@@ -94,6 +105,7 @@ class SellerVerification(models.Model):
                 "phone": getattr(getattr(self.user, "profile", None), "phone", ""),
                 "role": "seller",
                 "is_verified": self.is_verified or self.verification_status == "approved",
+                "kyc_status": "verified" if self.verification_status == "approved" else "pending" if self.verification_status == "pending" else "rejected",
             },
         )
 

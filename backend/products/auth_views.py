@@ -49,6 +49,7 @@ def signup(request):
                 "phone": phone,
                 "role": role,
                 "is_verified": False,
+                "kyc_status": "not_started",
             },
         },
         status=status.HTTP_201_CREATED,
@@ -80,6 +81,7 @@ def login(request):
                 "phone": profile.phone,
                 "role": profile.role,
                 "is_verified": profile.is_verified,
+                "kyc_status": profile.kyc_status,
             },
         }
     )
@@ -97,6 +99,7 @@ def me(request):
             "phone": profile.phone,
             "role": profile.role,
             "is_verified": profile.is_verified,
+            "kyc_status": profile.kyc_status,
             "listing_count": Product.objects.filter(user=request.user).count(),
         }
     )
