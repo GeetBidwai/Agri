@@ -1,4 +1,5 @@
 from django.db import IntegrityError
+from django.db.models import Q
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
@@ -42,7 +43,12 @@ def get_products(request):
 
         # Optional search keeps the old response unchanged when query is empty
         if search_query:
-            products = products.filter(name__icontains=search_query)
+            products = products.filter(
+                Q(name__icontains=search_query)
+                | Q(product_name__icontains=search_query)
+                | Q(hindi__icontains=search_query)
+                | Q(hindi_name__icontains=search_query)
+            )
 
         # Optional type filter keeps the old response unchanged when no filter is sent
         if listing_type in {'BUY', 'SELL'}:

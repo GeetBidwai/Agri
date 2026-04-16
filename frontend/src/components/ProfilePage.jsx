@@ -9,15 +9,16 @@ function ProfilePage({ language, showSellerKyc = false }) {
 
   const text = language === "HI"
     ? {
-        title: "à¤®à¥‡à¤°à¥€ à¤ªà¥à¤°à¥‹à¤«à¤¾à¤‡à¤²",
-        subtitle: "à¤…à¤ªà¤¨à¥‡ à¤–à¤¾à¤¤à¥‡ à¤•à¥€ à¤œà¤¾à¤¨à¤•à¤¾à¤°à¥€ à¤¦à¥‡à¤–à¥‡à¤‚",
-        username: "à¤¯à¥‚à¤œà¤¼à¤°à¤¨à¥‡à¤®",
-        phone: "à¤«à¥‹à¤¨ à¤¨à¤‚à¤¬à¤°",
-        listings: "à¤†à¤ªà¤•à¥€ à¤²à¤¿à¤¸à¥à¤Ÿà¤¿à¤‚à¤—",
-        role: "Role",
-        verified: "Verified Seller",
-        loading: "à¤²à¥‹à¤¡ à¤¹à¥‹ à¤°à¤¹à¤¾ à¤¹à¥ˆ...",
-        unavailable: "à¤‰à¤ªà¤²à¤¬à¥à¤§ à¤¨à¤¹à¥€à¤‚",
+        title: "मेरी प्रोफ़ाइल",
+        subtitle: "अपने खाते की जानकारी देखें",
+        username: "यूज़रनेम",
+        phone: "फ़ोन नंबर",
+        listings: "आपकी लिस्टिंग",
+        role: "भूमिका",
+        verified: "सत्यापित विक्रेता",
+        notVerified: "सत्यापित नहीं",
+        loading: "लोड हो रहा है...",
+        unavailable: "उपलब्ध नहीं",
       }
     : {
         title: "My Profile",
@@ -27,9 +28,16 @@ function ProfilePage({ language, showSellerKyc = false }) {
         listings: "Your Listings",
         role: "Role",
         verified: "Verified Seller",
+        notVerified: "Not verified",
         loading: "Loading...",
         unavailable: "Not available",
       };
+
+  const localizedRole = profile?.role === "seller"
+    ? language === "HI" ? "विक्रेता" : "seller"
+    : profile?.role === "buyer"
+      ? language === "HI" ? "खरीदार" : "buyer"
+      : profile?.role || "buyer";
 
   const fetchProfile = () => {
     setLoading(true);
@@ -90,10 +98,10 @@ function ProfilePage({ language, showSellerKyc = false }) {
               <div className="rounded-xl border border-gray-200 p-4">
                 <p className="text-sm text-gray-500">{text.role}</p>
                 <p className="mt-2 text-lg font-semibold text-gray-900">
-                  {profile?.role || "buyer"}
+                  {localizedRole}
                 </p>
                 <p className="mt-2 text-xs text-teal-600">
-                  {profile?.is_verified ? text.verified : "Not verified"}
+                  {profile?.is_verified ? text.verified : text.notVerified}
                 </p>
               </div>
             </div>

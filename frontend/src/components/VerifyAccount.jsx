@@ -27,25 +27,32 @@ function VerifyAccount({ language, onStatusChange }) {
 
   const text = language === "HI"
     ? {
-        title: "à¤…à¤•à¤¾à¤‰à¤‚à¤Ÿ à¤µà¥‡à¤°à¤¿à¤«à¤¾à¤‡ à¤•à¤°à¥‡à¤‚",
-        subtitle: "KYC à¤œà¤¾à¤¨à¤•à¤¾à¤°à¥€ à¤œà¤®à¤¾ à¤•à¤°à¥‡à¤‚",
-        fullName: "à¤ªà¥‚à¤°à¤¾ à¤¨à¤¾à¤®",
-        aadhaar: "à¤†à¤§à¤¾à¤° à¤¨à¤‚à¤¬à¤°",
-        aadhaarFront: "à¤†à¤§à¤¾à¤° à¤«à¥à¤°à¤‚à¤Ÿ",
-        aadhaarBack: "à¤†à¤§à¤¾à¤° à¤¬à¥ˆà¤•",
-        selfie: "à¤¸à¥‡à¤²à¥à¤«à¥€",
-        address: "à¤ªà¤¤à¤¾",
-        sellerType: "à¤¸à¥‡à¤²à¤° à¤Ÿà¤¾à¤‡à¤ª",
-        selectSellerType: "à¤¸à¥‡à¤²à¤° à¤Ÿà¤¾à¤‡à¤ª à¤šà¥à¤¨à¥‡à¤‚",
-        submit: "à¤œà¤®à¤¾ à¤•à¤°à¥‡à¤‚",
-        submitting: "à¤œà¤®à¤¾ à¤¹à¥‹ à¤°à¤¹à¤¾ à¤¹à¥ˆ...",
-        pending: "Verification Pending",
-        approved: "✔ Verified Seller",
-        rejected: "Verification Rejected",
-        notSubmitted: "Verify Account",
-        success: "Verification submitted (Pending approval)",
-        loading: "à¤²à¥‹à¤¡ à¤¹à¥‹ à¤°à¤¹à¤¾ à¤¹à¥ˆ...",
-        validation: "à¤•à¥ƒà¤ªà¤¯à¤¾ à¤œà¤°à¥‚à¤°à¥€ à¤«à¥€à¤²à¥à¤¡ à¤­à¤°à¥‡à¤‚",
+        title: "अकाउंट वेरिफाई करें",
+        subtitle: "KYC जानकारी जमा करें",
+        fullName: "पूरा नाम",
+        aadhaar: "आधार नंबर",
+        aadhaarFront: "आधार फ्रंट",
+        aadhaarBack: "आधार बैक",
+        selfie: "सेल्फी",
+        address: "पता",
+        sellerType: "विक्रेता प्रकार",
+        selectSellerType: "विक्रेता प्रकार चुनें",
+        submit: "जमा करें",
+        submitting: "जमा हो रहा है...",
+        pending: "सत्यापन लंबित",
+        approved: "✔ सत्यापित विक्रेता",
+        rejected: "सत्यापन अस्वीकृत",
+        notSubmitted: "खाता सत्यापित करें",
+        success: "सत्यापन जमा हो गया (स्वीकृति लंबित)",
+        loading: "लोड हो रहा है...",
+        validation: "कृपया जरूरी फ़ील्ड भरें",
+        error: "कुछ गलत हो गया!",
+        sellerTypeOptions: {
+          farmer: "किसान",
+          trader: "व्यापारी",
+          wholesaler: "थोक विक्रेता",
+          retailer: "खुदरा विक्रेता",
+        },
       }
     : {
         title: "Verify Account",
@@ -67,6 +74,13 @@ function VerifyAccount({ language, onStatusChange }) {
         success: "Verification submitted (Pending approval)",
         loading: "Loading...",
         validation: "Please fill required fields",
+        error: "Something went wrong!",
+        sellerTypeOptions: {
+          farmer: "Farmer",
+          trader: "Trader",
+          wholesaler: "Wholesaler",
+          retailer: "Retailer",
+        },
       };
 
   useEffect(() => {
@@ -127,12 +141,19 @@ function VerifyAccount({ language, onStatusChange }) {
       })
       .catch((err) => {
         console.error(err);
-        alert(err.response?.data?.detail || "Something went wrong!");
+        alert(err.response?.data?.detail || text.error);
       })
       .finally(() => setSubmitting(false));
   };
 
   const verificationStatus = statusInfo?.verification_status || "not_submitted";
+  const localizedVerificationStatus = verificationStatus === "approved"
+    ? text.approved
+    : verificationStatus === "pending"
+      ? text.pending
+      : verificationStatus === "rejected"
+        ? text.rejected
+        : text.notSubmitted;
 
   return (
     <section className="bg-gray-50 py-14 px-6 min-h-[calc(100vh-4rem)]">
@@ -145,15 +166,7 @@ function VerifyAccount({ language, onStatusChange }) {
         ) : (
           <>
             <div className="mt-6 rounded-xl border border-gray-200 p-4">
-              <p className="text-sm text-gray-500">
-                {verificationStatus === "approved"
-                  ? text.approved
-                  : verificationStatus === "pending"
-                    ? text.pending
-                    : verificationStatus === "rejected"
-                      ? text.rejected
-                      : text.notSubmitted}
-              </p>
+              <p className="text-sm text-gray-500">{localizedVerificationStatus}</p>
             </div>
 
             {verificationStatus !== "approved" && verificationStatus !== "pending" && (
@@ -168,7 +181,7 @@ function VerifyAccount({ language, onStatusChange }) {
                   <option value="">{text.selectSellerType}</option>
                   {SELLER_TYPES.map((option) => (
                     <option key={option.value} value={option.value}>
-                      {option.label}
+                      {text.sellerTypeOptions[option.value] || option.label}
                     </option>
                   ))}
                 </select>

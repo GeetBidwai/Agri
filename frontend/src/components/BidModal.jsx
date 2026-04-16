@@ -16,28 +16,32 @@ function BidModal({ product, onClose, language }) {
 
   const text = language === "HI"
     ? {
-        title: "à¤¬à¥‹à¤²à¥€ à¤²à¤—à¤¾à¤à¤‚",
-        name: "à¤†à¤ªà¤•à¤¾ à¤¨à¤¾à¤®",
-        phone: "à¤«à¥‹à¤¨ à¤¨à¤‚à¤¬à¤°",
-        price: "à¤¬à¥‹à¤²à¥€ à¤®à¥‚à¤²à¥à¤¯ (â‚¹/kg)",
-        qty: "à¤®à¤¾à¤¤à¥à¤°à¤¾ (kg)",
-        submit: "à¤¬à¥‹à¤²à¥€ à¤œà¤®à¤¾ à¤•à¤°à¥‡à¤‚",
-        submitting: "à¤œà¤®à¤¾ à¤¹à¥‹ à¤°à¤¹à¤¾ à¤¹à¥ˆ...",
-        success: "à¤†à¤ªà¤•à¥€ à¤¬à¥‹à¤²à¥€ à¤¸à¤«à¤²à¤¤à¤¾à¤ªà¥‚à¤°à¥à¤µà¤• à¤œà¤®à¤¾ à¤¹à¥‹ à¤—à¤ˆ!",
-        error: "à¤•à¥à¤› à¤—à¤²à¤¤ à¤¹à¥‹ à¤—à¤¯à¤¾!",
-        close: "à¤¬à¤‚à¤¦ à¤•à¤°à¥‡à¤‚",
+        title: "बोली लगाएं",
+        name: "आपका नाम",
+        phone: "फ़ोन नंबर",
+        price: "बोली मूल्य (₹/kg)",
+        qty: "मात्रा (kg)",
+        submit: "बोली जमा करें",
+        submitting: "जमा हो रहा है...",
+        success: "आपकी बोली सफलतापूर्वक जमा हो गई!",
+        error: "कुछ गलत हो गया!",
+        close: "बंद करें",
+        loginRequired: "बोली लगाने के लिए लॉगिन करें।",
+        listed: "सूचीबद्ध",
       }
     : {
         title: "Place Your Bid",
         name: "Your Name",
         phone: "Phone Number",
-        price: "Bid Price (â‚¹/kg)",
+        price: "Bid Price (₹/kg)",
         qty: "Quantity (kg)",
         submit: "Submit Bid",
         submitting: "Submitting...",
         success: "Your bid has been placed successfully!",
         error: "Something went wrong!",
         close: "Close",
+        loginRequired: "Please login to place a bid.",
+        listed: "Listed",
       };
 
   const handleChange = (e) => {
@@ -50,7 +54,7 @@ function BidModal({ product, onClose, language }) {
     setError("");
 
     if (!token) {
-      setError("Please login to place a bid.");
+      setError(text.loginRequired);
       return;
     }
 
@@ -96,12 +100,12 @@ function BidModal({ product, onClose, language }) {
           <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-100">
             <p className="font-semibold text-gray-800">{product.name}</p>
             <p className="text-sm text-gray-500">{product.variety}</p>
-            <p className="text-green-600 font-bold">Listed: {formatPricePerKg(product.price_per_kg)}</p>
+            <p className="text-green-600 font-bold">{text.listed}: {formatPricePerKg(product.price_per_kg)}</p>
           </div>
 
           {!token ? (
             <div className="space-y-4">
-              <p className="text-sm text-red-600">Please login to place a bid.</p>
+              <p className="text-sm text-red-600">{text.loginRequired}</p>
               <button
                 type="button"
                 onClick={onClose}
@@ -111,74 +115,74 @@ function BidModal({ product, onClose, language }) {
               </button>
             </div>
           ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{text.name}</label>
-              <input
-                type="text"
-                name="buyer_name"
-                value={form.buyer_name}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-              />
-            </div>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{text.name}</label>
+                <input
+                  type="text"
+                  name="buyer_name"
+                  value={form.buyer_name}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{text.phone}</label>
-              <input
-                type="tel"
-                name="buyer_phone"
-                value={form.buyer_phone}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-              />
-            </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{text.phone}</label>
+                <input
+                  type="tel"
+                  name="buyer_phone"
+                  value={form.buyer_phone}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{text.price}</label>
-              <input
-                type="number"
-                name="bid_price"
-                value={form.bid_price}
-                onChange={handleChange}
-                min="0"
-                step="0.01"
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-              />
-            </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{text.price}</label>
+                <input
+                  type="number"
+                  name="bid_price"
+                  value={form.bid_price}
+                  onChange={handleChange}
+                  min="0"
+                  step="0.01"
+                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{text.qty}</label>
-              <input
-                type="text"
-                name="quantity"
-                value={form.quantity}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-              />
-            </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{text.qty}</label>
+                <input
+                  type="text"
+                  name="quantity"
+                  value={form.quantity}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+              </div>
 
-            {error && (
-              <p className="text-red-500 text-sm">{error}</p>
-            )}
+              {error && (
+                <p className="text-red-500 text-sm">{error}</p>
+              )}
 
-            <div className="flex gap-3 pt-2">
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors"
-              >
-                {text.close}
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors disabled:bg-green-400"
-              >
-                {loading ? text.submitting : text.submit}
-              </button>
-            </div>
-          </form>
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors"
+                >
+                  {text.close}
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors disabled:bg-green-400"
+                >
+                  {loading ? text.submitting : text.submit}
+                </button>
+              </div>
+            </form>
           )}
         </div>
       </div>

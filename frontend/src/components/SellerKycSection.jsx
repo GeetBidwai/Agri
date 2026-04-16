@@ -10,17 +10,20 @@ function SellerKycSection({ language, onProfileRefresh }) {
 
   const text = language === "HI"
     ? {
-        title: "Seller KYC",
-        subtitle: "ID proof à¤”à¤° selfie upload à¤•à¤°à¥‡à¤‚",
-        pending: "Pending",
-        verified: "Verified",
-        rejected: "Rejected",
-        notSubmitted: "Not Submitted",
-        idProof: "ID Proof",
-        selfie: "Selfie",
-        submit: "Upload KYC",
-        submitting: "Uploading...",
-        success: "KYC submitted successfully.",
+        title: "विक्रेता केवाईसी",
+        subtitle: "आईडी प्रूफ और सेल्फी अपलोड करें",
+        pending: "लंबित",
+        verified: "सत्यापित",
+        rejected: "अस्वीकृत",
+        notSubmitted: "जमा नहीं किया गया",
+        idProof: "आईडी प्रूफ",
+        selfie: "सेल्फी",
+        submit: "केवाईसी अपलोड करें",
+        submitting: "अपलोड हो रहा है...",
+        success: "केवाईसी सफलतापूर्वक जमा हो गया।",
+        status: "स्थिति",
+        loading: "लोड हो रहा है...",
+        error: "कुछ गलत हो गया!",
       }
     : {
         title: "Seller KYC",
@@ -34,7 +37,35 @@ function SellerKycSection({ language, onProfileRefresh }) {
         submit: "Upload KYC",
         submitting: "Uploading...",
         success: "KYC submitted successfully.",
+        status: "Status",
+        loading: "Loading...",
+        error: "Something went wrong!",
       };
+
+  const localizedStatus = (() => {
+    const status = statusInfo?.status;
+    if (!status) {
+      return text.notSubmitted;
+    }
+
+    if (status === "Pending") {
+      return text.pending;
+    }
+
+    if (status === "Verified") {
+      return text.verified;
+    }
+
+    if (status === "Rejected") {
+      return text.rejected;
+    }
+
+    if (status === "Not Submitted") {
+      return text.notSubmitted;
+    }
+
+    return status;
+  })();
 
   const fetchStatus = () => {
     setLoading(true);
@@ -75,7 +106,7 @@ function SellerKycSection({ language, onProfileRefresh }) {
       })
       .catch((err) => {
         console.error(err);
-        alert(err.response?.data?.detail || "Something went wrong!");
+        alert(err.response?.data?.detail || text.error);
       })
       .finally(() => setSubmitting(false));
   };
@@ -86,9 +117,9 @@ function SellerKycSection({ language, onProfileRefresh }) {
       <p className="mt-2 text-sm text-gray-600">{text.subtitle}</p>
 
       <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
-        <p className="text-sm text-gray-500">Status</p>
+        <p className="text-sm text-gray-500">{text.status}</p>
         <p className="mt-1 text-lg font-semibold text-gray-900">
-          {loading ? "Loading..." : statusInfo?.status || text.notSubmitted}
+          {loading ? text.loading : localizedStatus}
         </p>
       </div>
 

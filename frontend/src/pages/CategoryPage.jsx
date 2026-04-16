@@ -11,11 +11,13 @@ function CategoryPage({ categoryName, onNavigateToContact, onPlaceBid, language 
         title: "लिस्टिंग",
         noData: "कोई लिस्टिंग नहीं मिली",
         loading: "लोड हो रहा है...",
+        showingAllItemsIn: "इस श्रेणी की सभी वस्तुएं दिखाई जा रही हैं",
       }
     : {
         title: "Listings",
         noData: "No listings found",
         loading: "Loading...",
+        showingAllItemsIn: "Showing all items in",
       };
 
   useEffect(() => {
@@ -36,7 +38,6 @@ function CategoryPage({ categoryName, onNavigateToContact, onPlaceBid, language 
     fetchCategoryListings();
   }, [categoryName]);
 
-  // Capitalize first letter for display
   const displayTitle = categoryName ? categoryName.charAt(0).toUpperCase() + categoryName.slice(1) : "";
 
   return (
@@ -47,7 +48,7 @@ function CategoryPage({ categoryName, onNavigateToContact, onPlaceBid, language 
             {displayTitle} {text.title}
           </h1>
           <p className="text-gray-600 mt-2">
-            Showing all items in {displayTitle}
+            {text.showingAllItemsIn} {displayTitle}
           </p>
         </div>
 

@@ -18,13 +18,13 @@ function LatestListings({
 
   const text = language === "HI"
     ? {
-        title: "à¤¨à¤ˆ à¤²à¤¿à¤¸à¥à¤Ÿà¤¿à¤‚à¤—",
-        subtitle: "à¤–à¤°à¥€à¤¦ à¤”à¤° à¤¬à¤¿à¤•à¥à¤°à¥€ à¤•à¥‡ à¤¨à¤ à¤…à¤µà¤¸à¤°",
-        sell: "à¤¬à¤¿à¤•à¥à¤°à¥€ à¤•à¥‡ à¤²à¤¿à¤ à¤‰à¤ªà¤²à¤¬à¥à¤§",
-        buy: "à¤–à¤°à¥€à¤¦à¤¾à¤° à¤¤à¤²à¤¾à¤¶ à¤®à¥‡à¤‚",
-        category: "Category",
-        maxPrice: "Max Price",
-        location: "Location",
+        title: "\u0928\u0908 \u0932\u093f\u0938\u094d\u091f\u093f\u0902\u0917",
+        subtitle: "\u0916\u0930\u0940\u0926 \u0914\u0930 \u092c\u093f\u0915\u094d\u0930\u0940 \u0915\u0947 \u0928\u090f \u0905\u0935\u0938\u0930",
+        sell: "\u092c\u093f\u0915\u094d\u0930\u0940 \u0915\u0947 \u0932\u093f\u090f \u0909\u092a\u0932\u092c\u094d\u0927",
+        buy: "\u0916\u0930\u0940\u0926\u093e\u0930 \u0924\u0932\u093e\u0936 \u092e\u0947\u0902",
+        category: "श्रेणी",
+        maxPrice: "अधिकतम मूल्य",
+        location: "स्थान",
       }
     : {
         title: "Latest Listings",
@@ -110,7 +110,7 @@ function LatestListings({
             ))
           ) : (
             <div className="col-span-full py-12 text-center text-gray-500 italic">
-              {language === "HI" ? "à¤•à¥‹à¤ˆ à¤²à¤¿à¤¸à¥à¤Ÿà¤¿à¤‚à¤— à¤¨à¤¹à¥€à¤‚ à¤®à¤¿à¤²à¥€" : "No listings found"}
+              {language === "HI" ? "\u0915\u094b\u0908 \u0932\u093f\u0938\u094d\u091f\u093f\u0902\u0917 \u0928\u0939\u0940\u0902 \u092e\u093f\u0932\u0940" : "No listings found"}
             </div>
           )}
         </div>

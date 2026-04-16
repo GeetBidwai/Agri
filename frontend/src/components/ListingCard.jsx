@@ -23,6 +23,8 @@ function ListingCard({ item, onNavigateToContact, onPlaceBid, onViewBids, langua
         placeBid: "\u092c\u094b\u0932\u0940 \u0932\u0917\u093e\u090f\u0902",
         viewBids: "\u092c\u094b\u0932\u093f\u092f\u093e\u0902 \u0926\u0947\u0916\u0947\u0902",
         notSpecified: "\u0909\u0932\u094d\u0932\u0947\u0916 \u0928\u0939\u0940\u0902",
+        reportedSuccessfully: "सफलतापूर्वक रिपोर्ट किया गया",
+        alreadyReported: "पहले ही रिपोर्ट किया जा चुका है",
       }
     : {
         forSale: "FOR SALE",
@@ -39,15 +41,17 @@ function ListingCard({ item, onNavigateToContact, onPlaceBid, onViewBids, langua
         placeBid: "Place Bid",
         viewBids: "View Bids",
         notSpecified: "Not specified",
+        reportedSuccessfully: "Reported successfully",
+        alreadyReported: "Already reported",
       };
 
   const handleReport = async () => {
     try {
       await api.post(`/products/${item.id}/report/`, { reason: "Suspicious listing" });
-      alert("Reported successfully");
+      alert(text.reportedSuccessfully);
     } catch (error) {
       console.error(error);
-      alert("Already reported");
+      alert(text.alreadyReported);
     }
   };
 

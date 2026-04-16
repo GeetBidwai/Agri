@@ -30,14 +30,17 @@ function AuthPage({ mode, onAuthSuccess, onNavigate, language }) {
       already: "Already have an account?",
       createAccount: "Create an account",
       switchLogin: "Login",
+      role: "Role",
+      buyer: "Buyer",
+      seller: "Seller",
     },
     HI: {
       loginTitle: "अपने खाते में लॉगिन करें",
       signupTitle: "अपना खाता बनाएं",
       loginSubtitle: "लिस्टिंग बनाने और प्रबंधित करने के लिए साइन इन करें।",
-      signupSubtitle: "खरीद और बिक्री लिस्टिंग पोस्ट करने के लिए साइन अप करें।",
+      signupSubtitle: "खरीद और बिक्री की लिस्टिंग पोस्ट करने के लिए साइन अप करें।",
       username: "यूज़रनेम",
-      phone: "फोन नंबर",
+      phone: "फ़ोन नंबर",
       password: "पासवर्ड",
       loading: "कृपया प्रतीक्षा करें...",
       login: "लॉगिन",
@@ -46,6 +49,9 @@ function AuthPage({ mode, onAuthSuccess, onNavigate, language }) {
       already: "क्या आपका खाता है?",
       createAccount: "खाता बनाएं",
       switchLogin: "लॉगिन",
+      role: "भूमिका",
+      buyer: "खरीदार",
+      seller: "विक्रेता",
     },
   };
 
@@ -90,10 +96,10 @@ function AuthPage({ mode, onAuthSuccess, onNavigate, language }) {
             <>
               <input name="phone" value={form.phone} placeholder={text.phone} onChange={handleChange} className="w-full p-3 border rounded-lg" />
               <label className="block text-sm text-gray-600">
-                {language === "HI" ? "Role" : "Role"}
+                {text.role}
                 <select name="role" value={form.role} onChange={handleChange} className="mt-1 w-full p-3 border rounded-lg">
-                  <option value="buyer">{language === "HI" ? "Buyer" : "Buyer"}</option>
-                  <option value="seller">{language === "HI" ? "Seller" : "Seller"}</option>
+                  <option value="buyer">{text.buyer}</option>
+                  <option value="seller">{text.seller}</option>
                 </select>
               </label>
             </>

@@ -24,6 +24,8 @@ function Navbar({
       logout: "Logout",
       signIn: "Sign In",
       myProfile: "My Profile",
+      sellerDashboard: "Seller Dashboard",
+      kyc: "KYC",
       verifyAccount: "Verify Account",
       verificationPending: "Verification Pending",
       verifiedSeller: "Verified Seller",
@@ -42,6 +44,8 @@ function Navbar({
       logout: "\u0932\u0949\u0917\u0906\u0909\u091f",
       signIn: "\u0938\u093e\u0907\u0928 \u0907\u0928",
       myProfile: "\u092e\u0947\u0930\u0940 \u092a\u094d\u0930\u094b\u092b\u093e\u0907\u0932",
+      sellerDashboard: "विक्रेता डैशबोर्ड",
+      kyc: "केवाईसी",
       verifyAccount: "\u0916\u093e\u0924\u093e \u0938\u0924\u094d\u092f\u093e\u092a\u093f\u0924 \u0915\u0930\u0947\u0902",
       verificationPending: "\u0938\u0924\u094d\u092f\u093e\u092a\u0928 \u0932\u0902\u092c\u093f\u0924",
       verifiedSeller: "\u0938\u0924\u094d\u092f\u093e\u092a\u093f\u0924 \u0935\u093f\u0915\u094d\u0930\u0947\u0924\u093e",
@@ -149,24 +153,24 @@ function Navbar({
                   <>
                     <button
                       type="button"
-                      onClick={() => {
+                    onClick={() => {
                         setMenuOpen(false);
                         onNavigate("seller-dashboard");
                       }}
                       className="block w-full px-4 py-3 text-left text-sm hover:bg-gray-50"
                     >
-                      Seller Dashboard
+                      {text.sellerDashboard}
                     </button>
 
                     <button
                       type="button"
-                      onClick={() => {
+                    onClick={() => {
                         setMenuOpen(false);
                         onNavigate("kyc");
                       }}
                       className="block w-full px-4 py-3 text-left text-sm hover:bg-gray-50"
                     >
-                      KYC
+                      {text.kyc}
                     </button>
 
                     <button

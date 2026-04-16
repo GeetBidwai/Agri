@@ -17,14 +17,20 @@ function ContactsPage({ productId, listing, onNavigate, language }) {
         type: "प्रकार",
         owner: "मालिक",
         location: "स्थान",
+        verified: "सत्यापित विक्रेता",
         notAvailable: "उपलब्ध नहीं",
         warning: "अग्रिम भुगतान न करें। सौदा करने से पहले विवरण जांच लें।",
-        viewPhone: "फोन देखें",
-        hidePhone: "फोन छिपाएं",
+        viewPhone: "फ़ोन देखें",
+        hidePhone: "फ़ोन छिपाएं",
         loading: "लोड हो रहा है...",
         report: "रिपोर्ट करें",
-        phoneNumber: "फोन नंबर",
-        phoneMissing: "फोन उपलब्ध नहीं",
+        phoneNumber: "फ़ोन नंबर",
+        phoneMissing: "फ़ोन उपलब्ध नहीं",
+        loginRequired: "संपर्क देखने के लिए लॉगिन करें",
+        defaultListing: "उत्पाद लिस्टिंग",
+        yes: "हाँ",
+        no: "नहीं",
+        reportSoon: "रिपोर्ट सुविधा जल्द जोड़ी जाएगी।",
       }
     : {
         back: "Back to listings",
@@ -43,13 +49,18 @@ function ContactsPage({ productId, listing, onNavigate, language }) {
         report: "Report",
         phoneNumber: "Phone Number",
         phoneMissing: "Phone not available",
+        loginRequired: "Please login to view contact",
+        defaultListing: "Product listing",
+        yes: "Yes",
+        no: "No",
+        reportSoon: "Report feature will be connected soon.",
       };
 
   useEffect(() => {
     const token = localStorage.getItem("authToken");
 
     if (!token) {
-      setMessage("Please login to view contact");
+      setMessage(text.loginRequired);
       setLoading(false);
       onNavigate("login");
       return;
@@ -66,7 +77,7 @@ function ContactsPage({ productId, listing, onNavigate, language }) {
         setMessage(err.response?.data?.detail || "");
       })
       .finally(() => setLoading(false));
-  }, [productId, onNavigate]);
+  }, [productId, onNavigate, text.loginRequired]);
 
   return (
     <section className="bg-gray-50 py-14 px-6 min-h-[calc(100vh-4rem)]">
@@ -84,10 +95,10 @@ function ContactsPage({ productId, listing, onNavigate, language }) {
           <p className="mt-2 text-gray-600">{text.subtitle}</p>
 
           <div className="mt-6 space-y-3 text-sm text-gray-700">
-            <p><span className="font-semibold">{text.listing}:</span> {listing?.name || "Product listing"}</p>
+            <p><span className="font-semibold">{text.listing}:</span> {listing?.name || text.defaultListing}</p>
             <p><span className="font-semibold">{text.type}:</span> {listing?.listing_type || contact?.listing_type || text.notAvailable}</p>
             <p><span className="font-semibold">{text.owner}:</span> {contact?.username || listing?.username || listing?.seller || text.notAvailable}</p>
-            <p><span className="font-semibold">{text.verified || "Verified Seller"}:</span> {contact?.seller_verified ? "Yes" : "No"}</p>
+            <p><span className="font-semibold">{text.verified}:</span> {contact?.seller_verified ? text.yes : text.no}</p>
             <p><span className="font-semibold">{text.location}:</span> {listing?.location || text.notAvailable}</p>
           </div>
 
@@ -107,7 +118,7 @@ function ContactsPage({ productId, listing, onNavigate, language }) {
 
             <button
               type="button"
-              onClick={() => alert("Report feature will be connected soon.")}
+              onClick={() => alert(text.reportSoon)}
               className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-600"
             >
               {text.report}

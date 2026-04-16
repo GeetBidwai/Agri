@@ -81,6 +81,8 @@ function CreateListing({ initialListingType = "SELL", setListings, refreshListin
         error: "\u0915\u0941\u091b \u0917\u0932\u0924 \u0939\u094b \u0917\u092f\u093e!",
         suggestion: "\u0939\u093f\u0902\u0926\u0940 \u0938\u0941\u091d\u093e\u0935",
         useSuggestion: "\u092f\u0939 \u092a\u0942\u0930\u093e \u0915\u0930\u0947\u0902",
+        buy: "खरीदें",
+        sell: "बेचें",
       }
     : {
         title: "Create Listing",
@@ -103,6 +105,8 @@ function CreateListing({ initialListingType = "SELL", setListings, refreshListin
         error: "Something went wrong!",
         suggestion: "Hindi suggestion",
         useSuggestion: "Use suggestion",
+        buy: "Buy",
+        sell: "Sell",
       };
 
   const handleChange = (e) => {
@@ -237,8 +241,8 @@ function CreateListing({ initialListingType = "SELL", setListings, refreshListin
           className="w-full p-2 border rounded"
         >
           <option value="">{text.selectType}</option>
-          <option value="BUY">Buy</option>
-          <option value="SELL">Sell</option>
+          <option value="BUY">{text.buy}</option>
+          <option value="SELL">{text.sell}</option>
         </select>
 
         <input

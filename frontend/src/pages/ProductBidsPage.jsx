@@ -9,16 +9,17 @@ function ProductBidsPage({ productId, product, onBack, language }) {
 
   const text = language === "HI"
     ? {
-        title: "à¤‡à¤¸ à¤‰à¤¤à¥à¤ªà¤¾à¤¦ à¤•à¥€ à¤¬à¥‹à¤²à¤¿à¤¯à¤¾à¤‚",
-        back: "à¤µà¤¾à¤ªà¤¸ à¤œà¤¾à¤à¤‚",
-        noBids: "à¤…à¤­à¥€ à¤¤à¤• à¤•à¥‹à¤ˆ à¤¬à¥‹à¤²à¥€ à¤¨à¤¹à¥€à¤‚",
-        highestBid: "à¤‰à¤šà¥à¤šà¤¤à¤® à¤¬à¥‹à¤²à¥€",
-        buyer: "à¤–à¤°à¥€à¤¦à¤¾à¤°",
-        phone: "à¤«à¥‹à¤¨",
-        price: "à¤¬à¥‹à¤²à¥€ à¤®à¥‚à¤²à¥à¤¯",
-        qty: "à¤®à¤¾à¤¤à¥à¤°à¤¾",
-        date: "à¤¤à¤¾à¤°à¥€à¤–",
-        listedPrice: "à¤¸à¥‚à¤šà¥€à¤¬à¤¦à¥à¤§ à¤®à¥‚à¤²à¥à¤¯",
+        title: "इस उत्पाद की बोलियां",
+        back: "वापस जाएं",
+        noBids: "अभी तक कोई बोली नहीं",
+        highestBid: "उच्चतम बोली",
+        buyer: "खरीदार",
+        phone: "फ़ोन",
+        price: "बोली मूल्य",
+        qty: "मात्रा",
+        date: "तारीख",
+        listedPrice: "सूचीबद्ध मूल्य",
+        loading: "लोड हो रहा है...",
       }
     : {
         title: "Bids for this Product",
@@ -31,6 +32,7 @@ function ProductBidsPage({ productId, product, onBack, language }) {
         qty: "Quantity",
         date: "Date",
         listedPrice: "Listed Price",
+        loading: "Loading...",
       };
 
   useEffect(() => {
@@ -84,7 +86,7 @@ function ProductBidsPage({ productId, product, onBack, language }) {
 
         {loading ? (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
-            <p className="text-gray-500">Loading...</p>
+            <p className="text-gray-500">{text.loading}</p>
           </div>
         ) : bids.length === 0 ? (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
