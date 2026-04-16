@@ -149,6 +149,20 @@ def report_product(request, product_id):
     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_user_bids(request):
+    """Fetch all bids received for products owned by the current user."""
+    bids = Bid.objects.filter(product__user=request.user).order_by('-created_at')
+    # Add product name to each bid for UI display
+    data = []
+    for bid in bids:
+        bid_data = BidSerializer(bid).data
+        bid_data['product_name'] = bid.product.name
+        data.append(bid_data)
+    return Response(data)
+
+
 @api_view(['GET', 'POST'])
 def manage_bids(request, product_id):
     product = get_object_or_404(Product, pk=product_id)
