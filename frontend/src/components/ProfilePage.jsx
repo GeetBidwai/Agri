@@ -41,7 +41,7 @@ const normalizeAuthUser = (user) => {
   };
 };
 
-function ProfilePage({ language, dashboardMode = false }) {
+function ProfilePage({ language, dashboardMode = false, showSellerKyc = false }) {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [userProducts, setUserProducts] = useState([]);
@@ -131,6 +131,35 @@ function ProfilePage({ language, dashboardMode = false }) {
         sell: "Sell",
         image: "Product Images",
         imageHelp: "Select new images only if you want to replace the current gallery.",
+        editProfile: "Profile overview",
+        sellerRole: "Seller account",
+        buyerRole: "Buyer account",
+        accountStatus: "Account Status",
+        verifiedAccount: "Verified account",
+        limitedAccount: "Verification pending",
+        memberSince: "Marketplace Access",
+        memberSinceValue: "Active account",
+        dashboardCta: "Open Dashboard",
+        verifyCta: "Complete Verification",
+        createListing: "Create Listing",
+        manageVerification: "Manage Verification",
+        statsListings: "Total Listings",
+        statsOffers: "Incoming Offers",
+        statsStatus: "Verification",
+        statsProducts: "Live Products",
+        quickActions: "Quick Actions",
+        dashboardWelcome: "Welcome back",
+        dashboardSummary: "Track listings, offers, and verification from one place.",
+        profileSummary: "Keep your account information and seller status in one place.",
+        sellerTools: "Seller tools for your account",
+        sellerToolsCopy: "Once verified, you can create listings, update products, and respond to offers from here.",
+        kycPanelTitle: "Verification Center",
+        kycPanelCopy: "Submit your documents and monitor verification progress before you start selling.",
+        verificationHintVerified: "Your account is ready to create and manage listings.",
+        verificationHintPending: "Your documents are under review. Selling unlocks after approval.",
+        verificationHintDefault: "Verification is required before you can publish listings.",
+        noOffers: "No offers available",
+        loadingOffers: "Loading offers...",
       };
 
   const dashboardTitle = language === "HI" ? "डैशबोर्ड" : "My Dashboard";
@@ -201,6 +230,42 @@ function ProfilePage({ language, dashboardMode = false }) {
       : profile?.kyc_status === "rejected"
         ? "text-red-600"
         : "text-gray-500";
+  const displayName = profile?.username || text.unavailable;
+  const profileInitial = displayName && displayName !== text.unavailable
+    ? displayName.charAt(0).toUpperCase()
+    : "?";
+  const roleLabel = canAccessSellerArea ? text.sellerRole : text.buyerRole;
+  const verificationHint = profile?.kyc_status === "verified"
+    ? text.verificationHintVerified
+    : profile?.kyc_status === "pending"
+      ? text.verificationHintPending
+      : text.verificationHintDefault;
+  const dashboardStats = [
+    {
+      label: text.statsListings,
+      value: profile?.listing_count ?? 0,
+      tone: "border-blue-100 bg-blue-50 text-blue-700",
+    },
+    {
+      label: text.statsProducts,
+      value: userProducts.length,
+      tone: "border-emerald-100 bg-emerald-50 text-emerald-700",
+    },
+    {
+      label: text.statsOffers,
+      value: userBids.length,
+      tone: "border-amber-100 bg-amber-50 text-amber-700",
+    },
+    {
+      label: text.statsStatus,
+      value: verificationLabel,
+      tone: profile?.kyc_status === "verified"
+        ? "border-green-100 bg-green-50 text-green-700"
+        : profile?.kyc_status === "pending"
+          ? "border-yellow-100 bg-yellow-50 text-yellow-700"
+          : "border-slate-200 bg-slate-100 text-slate-700",
+    },
+  ];
 
   const openEditModal = (product) => {
     setEditingProduct(product);
@@ -346,47 +411,191 @@ function ProfilePage({ language, dashboardMode = false }) {
     : getProductImages(editingProduct);
 
   return (
-    <section className="bg-gray-50 py-14 px-6 min-h-[calc(100vh-4rem)]">
-      <div className="max-w-3xl mx-auto rounded-2xl bg-white p-8 shadow">
-        <h2 className="text-3xl font-bold text-gray-900">{dashboardMode ? dashboardTitle : text.title}</h2>
-        <p className="mt-2 text-gray-600">{dashboardMode ? dashboardSubtitle : text.subtitle}</p>
+    <section className="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-emerald-50 via-white to-gray-50 px-6 py-10">
+      <div className={`${dashboardMode ? "max-w-6xl" : "max-w-5xl"} mx-auto space-y-6`}>
+        <div className="overflow-hidden rounded-3xl border border-emerald-100 bg-white shadow-sm">
+          <div className="bg-gradient-to-r from-emerald-600 via-green-600 to-lime-500 px-8 py-8 text-white">
+            <div className={`flex ${dashboardMode ? "flex-col gap-6 lg:flex-row lg:items-center lg:justify-between" : "flex-col gap-6 md:flex-row md:items-center md:justify-between"}`}>
+              <div className="flex items-center gap-4">
+                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white/15 text-3xl font-bold backdrop-blur-sm">
+                  {profileInitial}
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-white/80">
+                    {dashboardMode ? text.dashboardWelcome : text.editProfile}
+                  </p>
+                  <h2 className="mt-1 text-3xl font-bold">
+                    {dashboardMode ? dashboardTitle : text.title}
+                  </h2>
+                  <p className="mt-2 max-w-2xl text-sm text-white/85">
+                    {dashboardMode ? text.dashboardSummary : text.profileSummary}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                {!dashboardMode && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      window.location.hash = "#/seller-dashboard";
+                    }}
+                    className="rounded-xl bg-white px-5 py-3 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50"
+                  >
+                    {text.dashboardCta}
+                  </button>
+                )}
+                {(dashboardMode || showSellerKyc) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      window.location.hash = "#/verify-account";
+                    }}
+                    className="rounded-xl bg-white px-5 py-3 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50"
+                  >
+                    {text.manageVerification}
+                  </button>
+                )}
+                {dashboardMode && canAccessSellerArea && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      window.location.hash = "#/create/sell";
+                    }}
+                    className="rounded-xl border border-white/30 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/20"
+                  >
+                    {text.createListing}
+                  </button>
+                )}
+                {!canAccessSellerArea && !dashboardMode && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      window.location.hash = "#/verify-account";
+                    }}
+                    className="rounded-xl border border-white/30 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/20"
+                  >
+                    {text.verifyCta}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-4 border-t border-emerald-100 bg-white p-6 md:grid-cols-4">
+            <div className="rounded-2xl border border-gray-100 p-4">
+              <p className="text-sm text-gray-500">{text.username}</p>
+              <p className="mt-2 text-lg font-semibold text-gray-900">{displayName}</p>
+            </div>
+            <div className="rounded-2xl border border-gray-100 p-4">
+              <p className="text-sm text-gray-500">{text.phone}</p>
+              <p className="mt-2 text-lg font-semibold text-gray-900">{profile?.phone || text.unavailable}</p>
+            </div>
+            <div className="rounded-2xl border border-gray-100 p-4">
+              <p className="text-sm text-gray-500">{text.accountStatus}</p>
+              <p className="mt-2 text-lg font-semibold text-gray-900">
+                {canAccessSellerArea ? text.verifiedAccount : text.limitedAccount}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-gray-100 p-4">
+              <p className="text-sm text-gray-500">{text.memberSince}</p>
+              <p className="mt-2 text-lg font-semibold text-gray-900">{text.memberSinceValue}</p>
+            </div>
+          </div>
+        </div>
 
         {loading ? (
           <p className="mt-6 text-gray-600">{text.loading}</p>
         ) : (
           <>
-            <div className="mt-6 grid gap-4 sm:grid-cols-4">
-              <div className="rounded-xl border border-gray-200 p-4">
-                <p className="text-sm text-gray-500">{text.username}</p>
-                <p className="mt-2 text-lg font-semibold text-gray-900">
-                  {profile?.username || text.unavailable}
-                </p>
-              </div>
+            {!dashboardMode && !showSellerKyc && (
+              <div className="grid gap-6 lg:grid-cols-[1.4fr_0.9fr]">
+                <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900">{text.editProfile}</h3>
+                      <p className="mt-2 text-sm text-gray-600">{verificationHint}</p>
+                    </div>
+                    <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                      canAccessSellerArea ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
+                    }`}>
+                      {roleLabel}
+                    </span>
+                  </div>
 
-              <div className="rounded-xl border border-gray-200 p-4">
-                <p className="text-sm text-gray-500">{text.phone}</p>
-                <p className="mt-2 text-lg font-semibold text-gray-900">
-                  {profile?.phone || text.unavailable}
-                </p>
-              </div>
+                  <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                    <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                      <p className="text-sm text-gray-500">{text.listings}</p>
+                      <p className="mt-2 text-2xl font-bold text-gray-900">{profile?.listing_count ?? 0}</p>
+                    </div>
+                    <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                      <p className="text-sm text-gray-500">{text.kycStatus}</p>
+                      <p className={`mt-2 text-2xl font-bold ${verificationColor}`}>{verificationLabel}</p>
+                    </div>
+                  </div>
+                </div>
 
-              <div className="rounded-xl border border-gray-200 p-4">
-                <p className="text-sm text-gray-500">{text.listings}</p>
-                <p className="mt-2 text-lg font-semibold text-gray-900">
-                  {profile?.listing_count ?? 0}
-                </p>
+                <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
+                  <h3 className="text-xl font-bold text-gray-900">{text.quickActions}</h3>
+                  <p className="mt-2 text-sm text-gray-600">{text.sellerToolsCopy}</p>
+                  <div className="mt-6 space-y-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        window.location.hash = "#/seller-dashboard";
+                      }}
+                      className="w-full rounded-2xl bg-emerald-600 px-5 py-3 text-left text-sm font-semibold text-white transition hover:bg-emerald-700"
+                    >
+                      {text.dashboardCta}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        window.location.hash = "#/verify-account";
+                      }}
+                      className="w-full rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-left text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                    >
+                      {text.verifyCta}
+                    </button>
+                  </div>
+                </div>
               </div>
+            )}
 
-              <div className="rounded-xl border border-gray-200 p-4">
-                <p className="text-sm text-gray-500">{text.kycStatus}</p>
-                <p className={`mt-2 text-lg font-semibold ${verificationColor}`}>
-                  {verificationLabel}
-                </p>
+            {showSellerKyc && (
+              <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-900">{text.kycPanelTitle}</h3>
+                    <p className="mt-2 text-sm text-gray-600">{text.kycPanelCopy}</p>
+                    <p className={`mt-4 text-lg font-semibold ${verificationColor}`}>{verificationLabel}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      window.location.hash = "#/verify-account";
+                    }}
+                    className="rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700"
+                  >
+                    {text.verifyCta}
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
+
+            {dashboardMode && (
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                {dashboardStats.map((item) => (
+                  <div key={item.label} className={`rounded-3xl border p-5 shadow-sm ${item.tone}`}>
+                    <p className="text-sm font-medium opacity-80">{item.label}</p>
+                    <p className="mt-3 text-3xl font-bold">{item.value}</p>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {dashboardMode && !canAccessSellerArea && (
-              <div className="mt-12 rounded-2xl border border-amber-200 bg-amber-50 p-6">
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6">
                 <h3 className="text-xl font-bold text-gray-900">{verifyPromptTitle}</h3>
                 <p className="mt-2 text-sm text-gray-700">{verifyPromptBody}</p>
                 <button
@@ -402,36 +611,65 @@ function ProfilePage({ language, dashboardMode = false }) {
             )}
 
             {dashboardMode && canAccessSellerArea && (
-              <div className="mt-12 space-y-12">
+              <div className="space-y-12">
+                <section className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
+                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <h3 className="text-2xl font-bold text-gray-900">{text.quickActions}</h3>
+                      <p className="mt-2 text-sm text-gray-600">{text.sellerTools}</p>
+                    </div>
+                    <div className="flex flex-wrap gap-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          window.location.hash = "#/create/sell";
+                        }}
+                        className="rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700"
+                      >
+                        {text.createListing}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          window.location.hash = "#/verify-account";
+                        }}
+                        className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                      >
+                        {text.manageVerification}
+                      </button>
+                    </div>
+                  </div>
+                </section>
+
                 <section>
-                  <div className="flex items-center justify-between mb-6">
+                  <div className="mb-6 flex items-center justify-between">
                     <h3 className="text-2xl font-bold text-gray-900">{text.myProducts}</h3>
                   </div>
-                  <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+                  <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
                     <div className="overflow-x-auto">
                       <table className="w-full text-left">
-                        <thead className="bg-gray-50 border-b border-gray-100">
+                        <thead className="border-b border-gray-100 bg-gray-50">
                           <tr>
-                            <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">{text.name || "Product Name"}</th>
-                            <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">{text.price}</th>
-                            <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">{text.status}</th>
-                            <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase">{text.actions || "Actions"}</th>
+                            <th className="px-6 py-4 text-xs font-bold uppercase text-gray-500">{text.name || "Product Name"}</th>
+                            <th className="px-6 py-4 text-xs font-bold uppercase text-gray-500">{text.price}</th>
+                            <th className="px-6 py-4 text-xs font-bold uppercase text-gray-500">{text.status}</th>
+                            <th className="px-6 py-4 text-right text-xs font-bold uppercase text-gray-500">{text.actions || "Actions"}</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
                           {userProducts.length > 0 ? (
                             userProducts.map((p) => (
-                              <tr key={p.id} className="hover:bg-gray-50/50 transition-colors">
-                                <td className="px-6 py-4 font-medium text-gray-900">{p.name}</td>
-                                <td className="px-6 py-4 text-green-600 font-semibold">Rs {p.price_per_kg}/kg</td>
+                              <tr key={p.id} className="transition-colors hover:bg-gray-50/50">
+                                <td className="px-6 py-4 font-medium text-gray-900">{p.name || p.product_name}</td>
+                                <td className="px-6 py-4 font-semibold text-green-600">Rs {p.price_per_kg}/kg</td>
                                 <td className="px-6 py-4">
-                                  <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                                  <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
                                     p.is_verified ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
                                   }`}>
                                     {p.is_verified ? "Verified" : "Pending"}
                                   </span>
                                 </td>
-                                <td className="px-6 py-4 text-right space-x-3">
+                                <td className="space-x-3 px-6 py-4 text-right">
                                   <button
                                     type="button"
                                     onClick={() => openEditModal(p)}
@@ -453,7 +691,7 @@ function ProfilePage({ language, dashboardMode = false }) {
                             ))
                           ) : (
                             <tr>
-                              <td colSpan="4" className="px-6 py-12 text-center text-gray-500 italic">
+                              <td colSpan="4" className="px-6 py-12 text-center italic text-gray-500">
                                 {fetchingDashboard ? (text.loadingProducts || "Loading products...") : (text.noProducts || "No products available")}
                               </td>
                             </tr>
@@ -465,18 +703,18 @@ function ProfilePage({ language, dashboardMode = false }) {
                 </section>
 
                 <section>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-6">{text.incomingOffers}</h3>
+                  <h3 className="mb-6 text-2xl font-bold text-gray-900">{text.incomingOffers}</h3>
                   <div className="grid gap-6 sm:grid-cols-2">
                     {userBids.length > 0 ? (
                       userBids.map((o) => (
-                        <div key={o.id} className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
-                          <div className="flex justify-between items-start mb-4">
+                        <div key={o.id} className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-shadow hover:shadow-md">
+                          <div className="mb-4 flex items-start justify-between">
                             <div>
-                              <p className="text-sm text-gray-500 mb-1">{o.product_name}</p>
+                              <p className="mb-1 text-sm text-gray-500">{o.product_name}</p>
                               <p className="text-lg font-bold text-gray-900">{o.buyer_name}</p>
                             </div>
                             <div className="text-right">
-                              <p className="text-xs text-gray-500 uppercase">{text.offered}</p>
+                              <p className="text-xs uppercase text-gray-500">{text.offered}</p>
                               <p className="text-lg font-bold text-green-600">Rs {o.bid_price}/kg</p>
                             </div>
                           </div>
@@ -494,7 +732,7 @@ function ProfilePage({ language, dashboardMode = false }) {
                               type="button"
                               onClick={() => handleBidDecision(o, "accept")}
                               disabled={o.status !== "pending" || processingBidId === o.id}
-                              className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-xl font-semibold text-sm transition-colors disabled:bg-green-300 disabled:cursor-not-allowed"
+                              className="flex-1 rounded-xl bg-green-600 py-2 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-green-300"
                             >
                               {text.accept}
                             </button>
@@ -502,7 +740,7 @@ function ProfilePage({ language, dashboardMode = false }) {
                               type="button"
                               onClick={() => handleBidDecision(o, "reject")}
                               disabled={o.status !== "pending" || processingBidId === o.id}
-                              className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-xl font-semibold text-sm transition-colors disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+                              className="flex-1 rounded-xl bg-gray-100 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-200 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
                             >
                               {text.reject}
                             </button>
@@ -510,8 +748,8 @@ function ProfilePage({ language, dashboardMode = false }) {
                         </div>
                       ))
                     ) : (
-                      <div className="col-span-full py-12 text-center text-gray-500 italic bg-white rounded-2xl border border-gray-100">
-                        {fetchingDashboard ? "Loading offers..." : "No offers available"}
+                      <div className="col-span-full rounded-2xl border border-gray-100 bg-white py-12 text-center italic text-gray-500">
+                        {fetchingDashboard ? text.loadingOffers : text.noOffers}
                       </div>
                     )}
                   </div>
@@ -527,7 +765,7 @@ function ProfilePage({ language, dashboardMode = false }) {
           <div className="mx-auto w-full max-w-2xl max-h-[calc(100vh-3rem)] overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h3 className="text-2xl font-bold text-gray-900">{text.edit} {editingProduct.name}</h3>
+                <h3 className="text-2xl font-bold text-gray-900">{text.edit} {editingProduct.name || editingProduct.product_name}</h3>
                 <p className="mt-1 text-sm text-gray-500">{text.productDetails || "Product details"}</p>
               </div>
               <button
