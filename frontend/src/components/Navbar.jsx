@@ -5,6 +5,7 @@ function Navbar({
   username,
   verificationStatus,
   onNavigate,
+  onJumpToSection,
   onCreateListing,
   onLogout,
   language,
@@ -16,8 +17,8 @@ function Navbar({
   const copy = {
     EN: {
       home: "Home",
-      buy: "Buy",
-      sell: "Sell",
+      categories: "Categories",
+      listings: "Listings",
       mandiPrices: "Mandi Prices",
       languageButton: "Hindi",
       postListing: "Post Listing",
@@ -35,8 +36,8 @@ function Navbar({
     },
     HI: {
       home: "\u0939\u094b\u092e",
-      buy: "\u0916\u0930\u0940\u0926\u0947\u0902",
-      sell: "\u092c\u0947\u091a\u0947\u0902",
+      categories: "\u0936\u094d\u0930\u0947\u0923\u093f\u092f\u093e\u0901",
+      listings: "\u0932\u093f\u0938\u094d\u091f\u093f\u0902\u0917\u094d\u0938",
       mandiPrices: "\u092e\u0902\u0921\u0940 \u092d\u093e\u0935",
       languageButton: "English",
       postListing: "\u0932\u093f\u0938\u094d\u091f\u093f\u0902\u0917 \u092a\u094b\u0938\u094d\u091f \u0915\u0930\u0947\u0902",
@@ -88,11 +89,11 @@ function Navbar({
         <button type="button" onClick={() => onNavigate("home")} className="px-3 py-2 rounded-lg text-sm font-medium text-green-600 bg-green-50">
           {text.home}
         </button>
-        <button type="button" onClick={() => onNavigate("buy")} className="px-3 py-2 rounded-lg text-sm font-medium hover:bg-green-50">
-          {text.buy}
+        <button type="button" onClick={() => onJumpToSection("browse-categories")} className="px-3 py-2 rounded-lg text-sm font-medium hover:bg-green-50">
+          {text.categories}
         </button>
-        <button type="button" onClick={() => onNavigate("sell")} className="px-3 py-2 rounded-lg text-sm font-medium hover:bg-green-50">
-          {text.sell}
+        <button type="button" onClick={() => onJumpToSection("latest-listings")} className="px-3 py-2 rounded-lg text-sm font-medium hover:bg-green-50">
+          {text.listings}
         </button>
         <button type="button" onClick={() => onNavigate("mandi-prices")} className="px-3 py-2 rounded-lg text-sm font-medium hover:bg-green-50">
           {text.mandiPrices}

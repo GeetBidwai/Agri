@@ -23,7 +23,7 @@ function CategoryGrid({ onNavigate, language }) {
       };
 
   return (
-    <section className="bg-white py-14 px-6">
+    <section id="browse-categories" className="bg-white py-14 px-6">
       <div className="max-w-6xl mx-auto">
         <h2 className="text-2xl font-bold">{text.title}</h2>
         <p className="text-gray-600 mt-1">{text.subtitle}</p>

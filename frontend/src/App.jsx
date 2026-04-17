@@ -101,11 +101,13 @@ const getRouteFromHash = () => {
   }
 
   if (hash === "#/buy") {
-    return { page: "home", listingType: "BUY" };
+    window.location.hash = "#/";
+    return { page: "home" };
   }
 
   if (hash === "#/sell") {
-    return { page: "home", listingType: "SELL" };
+    window.location.hash = "#/";
+    return { page: "home" };
   }
 
   return { page: "home" };
@@ -114,8 +116,8 @@ const getRouteFromHash = () => {
 function App() {
   const [listings, setListings] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeListingType, setActiveListingType] = useState("");
   const [route, setRoute] = useState(getRouteFromHash);
+  const [pendingSectionId, setPendingSectionId] = useState("");
   const [language, setLanguage] = useState(() => localStorage.getItem("siteLanguage") || "EN");
   const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem("authUser");
@@ -130,8 +132,6 @@ function App() {
   const navigate = (nextRoute, value) => {
     const hashMap = {
       home: "#/",
-      buy: "#/buy",
-      sell: "#/sell",
       login: "#/login",
       signup: "#/signup",
       profile: "#/profile",
@@ -175,10 +175,6 @@ function App() {
       search: searchQuery,
     };
 
-    if (activeListingType) {
-      params.type = activeListingType;
-    }
-
     api.get("/products/", { params })
       .then((res) => {
         setListings(res.data);
@@ -188,7 +184,7 @@ function App() {
         // Show an error message if fetching fails
         alert("Failed to load listings. Please make sure the backend is running and migrations are applied.");
       });
-  }, [searchQuery, activeListingType]);
+  }, [searchQuery]);
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -212,10 +208,6 @@ function App() {
         return;
       }
 
-      if (nextRoute.page === "home") {
-        setActiveListingType(nextRoute.listingType || "");
-      }
-
       setRoute(nextRoute);
     };
 
@@ -226,7 +218,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if ((route.page === "home" && route.listingType) || route.page === "buy" || route.page === "sell") {
+    if (route.page === "home") {
       const listingsSection = document.getElementById("latest-listings");
       if (listingsSection) {
         listingsSection.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -312,6 +304,40 @@ function App() {
     setBidModalProduct(product);
   };
 
+  const jumpToSection = (sectionId) => {
+    if (!sectionId) {
+      return;
+    }
+
+    setPendingSectionId(sectionId);
+    if (window.location.hash !== "#/") {
+      window.location.hash = "#/";
+      return;
+    }
+
+    const target = document.getElementById(sectionId);
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+      setPendingSectionId("");
+    }
+  };
+
+  useEffect(() => {
+    if (route.page !== "home" || !pendingSectionId) {
+      return;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      const target = document.getElementById(pendingSectionId);
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+        setPendingSectionId("");
+      }
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [pendingSectionId, route.page]);
+
   return (
     <div>
       <Navbar
@@ -319,6 +345,7 @@ function App() {
         username={user?.username}
         verificationStatus={verificationStatus}
         onNavigate={navigate}
+        onJumpToSection={jumpToSection}
         onCreateListing={handleCreateListingClick}
         onLogout={handleLogout}
         language={language}
@@ -429,8 +456,6 @@ function App() {
           />
           <LatestListings
             listings={listings}
-            activeListingType={activeListingType}
-            setActiveListingType={setActiveListingType}
             onNavigateToContact={(productId) => navigate("contacts", productId)}
             onNavigateToDetail={(productId) => navigate("listing", productId)}
             onPlaceBid={handlePlaceBid}
