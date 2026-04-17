@@ -125,6 +125,63 @@ def get_product_contact(request, product_id):
     return Response(serializer.data)
 
 
+@api_view(["GET", "PUT", "DELETE"])
+def product_detail(request, product_id):
+    product = get_object_or_404(Product, pk=product_id)
+
+    if request.method == "GET":
+        serializer = ProductSerializer(product, context={"request": request})
+        return Response(serializer.data)
+
+    if not request.user or not request.user.is_authenticated:
+        return Response(
+            {"detail": "Authentication credentials were not provided."},
+            status=status.HTTP_401_UNAUTHORIZED,
+        )
+
+    if product.user_id != request.user.id:
+        return Response(
+            {"detail": "You can only manage your own products."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    if request.method == "DELETE":
+        product.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    payload = request.data.copy()
+    listing_type = payload.get("listing_type")
+
+    if listing_type:
+        payload["listing_type"] = str(listing_type).upper()
+        payload["type"] = str(listing_type).lower()
+    elif payload.get("type"):
+        payload["listing_type"] = str(payload["type"]).upper()
+
+    if payload.get("product_name") and not payload.get("name"):
+        payload["name"] = payload["product_name"]
+    elif payload.get("name") and not payload.get("product_name"):
+        payload["product_name"] = payload["name"]
+
+    if payload.get("hindi_name") and not payload.get("hindi"):
+        payload["hindi"] = payload["hindi_name"]
+    elif payload.get("hindi") and not payload.get("hindi_name"):
+        payload["hindi_name"] = payload["hindi"]
+
+    payload.pop("seller", None)
+    payload.pop("phone", None)
+    payload.pop("contact_phone", None)
+    payload.pop("user", None)
+    payload.pop("is_verified", None)
+    payload.pop("created_at", None)
+
+    serializer = ProductSerializer(product, data=payload, partial=True, context={"request": request})
+    if serializer.is_valid():
+        serializer.save()
+        return Response(ProductSerializer(serializer.instance, context={"request": request}).data)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 @authentication_classes([TokenAuthentication])

@@ -99,3 +99,60 @@ class Phase3BackendTests(APITestCase):
         profile.refresh_from_db()
         self.assertEqual(profile.kyc_status, "pending")
         self.assertFalse(profile.is_verified)
+
+    def test_owner_can_update_product_from_products_detail_endpoint(self):
+        user = self.user_model.objects.create_user(username="editor", password="testpass123")
+        product = Product.objects.create(
+            user=user,
+            seller=user.username,
+            contact_phone="5555555555",
+            listing_type="SELL",
+            name="Chili",
+            product_name="Chili",
+            quantity=10,
+            price_per_kg="180.00",
+            location="Indore",
+            category="Spices",
+        )
+        self.client.force_authenticate(user=user)
+
+        response = self.client.put(
+            f"/api/products/{product.id}/",
+            {
+                "product_name": "Red Chili",
+                "price_per_kg": "190.00",
+                "quantity": 12,
+                "location": "Dewas",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        product.refresh_from_db()
+        self.assertEqual(product.name, "Red Chili")
+        self.assertEqual(product.product_name, "Red Chili")
+        self.assertEqual(str(product.price_per_kg), "190.00")
+        self.assertEqual(product.quantity, 12)
+        self.assertEqual(product.location, "Dewas")
+
+    def test_non_owner_cannot_delete_product_from_products_detail_endpoint(self):
+        owner = self.user_model.objects.create_user(username="owner", password="testpass123")
+        intruder = self.user_model.objects.create_user(username="intruder", password="testpass123")
+        product = Product.objects.create(
+            user=owner,
+            seller=owner.username,
+            contact_phone="5555555555",
+            listing_type="SELL",
+            name="Turmeric",
+            product_name="Turmeric",
+            quantity=8,
+            price_per_kg="120.00",
+            location="Ujjain",
+            category="Spices",
+        )
+        self.client.force_authenticate(user=intruder)
+
+        response = self.client.delete(f"/api/products/{product.id}/")
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertTrue(Product.objects.filter(id=product.id).exists())

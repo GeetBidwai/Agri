@@ -2,6 +2,18 @@ import { useEffect, useState } from "react";
 
 import api from "../api";
 
+const createEditForm = (product) => ({
+  product_name: product?.product_name || product?.name || "",
+  hindi_name: product?.hindi_name || product?.hindi || "",
+  category: product?.category || "",
+  listing_type: product?.listing_type || "SELL",
+  variety: product?.variety || "",
+  quantity: product?.quantity ?? "",
+  price_per_kg: product?.price_per_kg ?? "",
+  location: product?.location || "",
+  description: product?.description || "",
+});
+
 const normalizeAuthUser = (user) => {
   if (!user) {
     return null;
@@ -23,6 +35,10 @@ function ProfilePage({ language, dashboardMode = false }) {
   const [userProducts, setUserProducts] = useState([]);
   const [userBids, setUserBids] = useState([]);
   const [fetchingDashboard, setFetchingDashboard] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [editForm, setEditForm] = useState(() => createEditForm(null));
+  const [savingProduct, setSavingProduct] = useState(false);
+  const [deletingProductId, setDeletingProductId] = useState(null);
 
   const text = language === "HI"
     ? {
@@ -70,6 +86,30 @@ function ProfilePage({ language, dashboardMode = false }) {
         price: "Price",
         status: "Status",
         offered: "Offered",
+        actions: "Actions",
+        productUpdated: "Product updated successfully.",
+        productDeleted: "Product deleted successfully.",
+        editValidation: "Please fill product name, quantity, price, category, listing type, and location.",
+        editError: "Unable to update this product right now.",
+        deleteError: "Unable to delete this product right now.",
+        deleteConfirm: "Delete this product? This action cannot be undone.",
+        cancel: "Cancel",
+        save: "Save",
+        saving: "Saving...",
+        deleting: "Deleting...",
+        noProducts: "No products available",
+        loadingProducts: "Loading products...",
+        productDetails: "Product details",
+        listingType: "Listing Type",
+        category: "Category",
+        quantity: "Quantity",
+        location: "Location",
+        description: "Description",
+        variety: "Variety",
+        name: "Product Name",
+        hindi: "Hindi Name",
+        buy: "Buy",
+        sell: "Sell",
       };
 
   const dashboardTitle = language === "HI" ? "डैशबोर्ड" : "My Dashboard";
@@ -141,6 +181,89 @@ function ProfilePage({ language, dashboardMode = false }) {
         ? "text-red-600"
         : "text-gray-500";
 
+  const openEditModal = (product) => {
+    setEditingProduct(product);
+    setEditForm(createEditForm(product));
+  };
+
+  const closeEditModal = () => {
+    if (savingProduct) {
+      return;
+    }
+
+    setEditingProduct(null);
+    setEditForm(createEditForm(null));
+  };
+
+  const handleEditChange = (event) => {
+    const { name, value } = event.target;
+    setEditForm((current) => ({ ...current, [name]: value }));
+  };
+
+  const handleSaveProduct = async (event) => {
+    event.preventDefault();
+
+    if (
+      !editingProduct ||
+      !editForm.product_name.trim() ||
+      !String(editForm.quantity).trim() ||
+      !String(editForm.price_per_kg).trim() ||
+      !editForm.category.trim() ||
+      !editForm.listing_type.trim() ||
+      !editForm.location.trim()
+    ) {
+      alert(text.editValidation || "Please fill product name, quantity, price, category, listing type, and location.");
+      return;
+    }
+
+    setSavingProduct(true);
+
+    try {
+      const payload = {
+        ...editForm,
+        quantity: Number(editForm.quantity),
+        price_per_kg: editForm.price_per_kg,
+      };
+      const response = await api.put(`/products/${editingProduct.id}/`, payload);
+
+      setUserProducts((current) => current.map((product) => (
+        product.id === editingProduct.id ? response.data : product
+      )));
+      setEditingProduct(null);
+      setEditForm(createEditForm(null));
+      alert(text.productUpdated || "Product updated successfully.");
+    } catch (err) {
+      console.error("Failed to update product:", err);
+      alert(err.response?.data?.detail || text.editError || "Unable to update this product right now.");
+    } finally {
+      setSavingProduct(false);
+    }
+  };
+
+  const handleDeleteProduct = async (productId) => {
+    if (!window.confirm(text.deleteConfirm || "Delete this product? This action cannot be undone.")) {
+      return;
+    }
+
+    setDeletingProductId(productId);
+
+    try {
+      await api.delete(`/products/${productId}/`);
+      setUserProducts((current) => current.filter((product) => product.id !== productId));
+      setProfile((current) => current ? { ...current, listing_count: Math.max((current.listing_count ?? 1) - 1, 0) } : current);
+      if (editingProduct?.id === productId) {
+        setEditingProduct(null);
+        setEditForm(createEditForm(null));
+      }
+      alert(text.productDeleted || "Product deleted successfully.");
+    } catch (err) {
+      console.error("Failed to delete product:", err);
+      alert(err.response?.data?.detail || text.deleteError || "Unable to delete this product right now.");
+    } finally {
+      setDeletingProductId(null);
+    }
+  };
+
   return (
     <section className="bg-gray-50 py-14 px-6 min-h-[calc(100vh-4rem)]">
       <div className="max-w-3xl mx-auto rounded-2xl bg-white p-8 shadow">
@@ -208,10 +331,10 @@ function ProfilePage({ language, dashboardMode = false }) {
                       <table className="w-full text-left">
                         <thead className="bg-gray-50 border-b border-gray-100">
                           <tr>
-                            <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">{text.title}</th>
+                            <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">{text.name || "Product Name"}</th>
                             <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">{text.price}</th>
                             <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">{text.status}</th>
-                            <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase">Actions</th>
+                            <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase">{text.actions || "Actions"}</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
@@ -222,21 +345,35 @@ function ProfilePage({ language, dashboardMode = false }) {
                                 <td className="px-6 py-4 text-green-600 font-semibold">Rs {p.price_per_kg}/kg</td>
                                 <td className="px-6 py-4">
                                   <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
-                                    p.verified ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
+                                    p.is_verified ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
                                   }`}>
-                                    {p.verified ? "Verified" : "Pending"}
+                                    {p.is_verified ? "Verified" : "Pending"}
                                   </span>
                                 </td>
                                 <td className="px-6 py-4 text-right space-x-3">
-                                  <button className="text-sm font-medium text-blue-600 hover:text-blue-700">{text.edit}</button>
-                                  <button className="text-sm font-medium text-red-600 hover:text-red-700">{text.delete}</button>
+                                  <button
+                                    type="button"
+                                    onClick={() => openEditModal(p)}
+                                    className="text-sm font-medium text-blue-600 hover:text-blue-700 disabled:cursor-not-allowed disabled:text-blue-300"
+                                    disabled={deletingProductId === p.id}
+                                  >
+                                    {text.edit}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteProduct(p.id)}
+                                    className="text-sm font-medium text-red-600 hover:text-red-700 disabled:cursor-not-allowed disabled:text-red-300"
+                                    disabled={deletingProductId === p.id}
+                                  >
+                                    {deletingProductId === p.id ? (text.deleting || "Deleting...") : text.delete}
+                                  </button>
                                 </td>
                               </tr>
                             ))
                           ) : (
                             <tr>
                               <td colSpan="4" className="px-6 py-12 text-center text-gray-500 italic">
-                                {fetchingDashboard ? "Loading products..." : "No products available"}
+                                {fetchingDashboard ? (text.loadingProducts || "Loading products...") : (text.noProducts || "No products available")}
                               </td>
                             </tr>
                           )}
@@ -284,6 +421,119 @@ function ProfilePage({ language, dashboardMode = false }) {
           </>
         )}
       </div>
+
+      {editingProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 px-4 py-6">
+          <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900">{text.edit} {editingProduct.name}</h3>
+                <p className="mt-1 text-sm text-gray-500">{text.productDetails || "Product details"}</p>
+              </div>
+              <button
+                type="button"
+                onClick={closeEditModal}
+                className="rounded-lg px-3 py-2 text-sm text-gray-500 hover:bg-gray-100"
+                disabled={savingProduct}
+              >
+                {text.cancel || "Cancel"}
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveProduct} className="mt-6 grid gap-4 sm:grid-cols-2">
+              <input
+                name="product_name"
+                value={editForm.product_name}
+                onChange={handleEditChange}
+                placeholder={text.name || "Product Name"}
+                className="w-full rounded-xl border border-gray-200 px-4 py-3"
+              />
+              <input
+                name="hindi_name"
+                value={editForm.hindi_name}
+                onChange={handleEditChange}
+                placeholder={text.hindi || "Hindi Name"}
+                className="w-full rounded-xl border border-gray-200 px-4 py-3"
+              />
+              <select
+                name="listing_type"
+                value={editForm.listing_type}
+                onChange={handleEditChange}
+                className="w-full rounded-xl border border-gray-200 px-4 py-3"
+              >
+                <option value="SELL">{text.sell || "Sell"}</option>
+                <option value="BUY">{text.buy || "Buy"}</option>
+              </select>
+              <input
+                name="category"
+                value={editForm.category}
+                onChange={handleEditChange}
+                placeholder={text.category || "Category"}
+                className="w-full rounded-xl border border-gray-200 px-4 py-3"
+              />
+              <input
+                name="variety"
+                value={editForm.variety}
+                onChange={handleEditChange}
+                placeholder={text.variety || "Variety"}
+                className="w-full rounded-xl border border-gray-200 px-4 py-3"
+              />
+              <input
+                type="number"
+                min="1"
+                name="quantity"
+                value={editForm.quantity}
+                onChange={handleEditChange}
+                placeholder={text.quantity || "Quantity"}
+                className="w-full rounded-xl border border-gray-200 px-4 py-3"
+              />
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                name="price_per_kg"
+                value={editForm.price_per_kg}
+                onChange={handleEditChange}
+                placeholder={text.price || "Price"}
+                className="w-full rounded-xl border border-gray-200 px-4 py-3"
+              />
+              <input
+                name="location"
+                value={editForm.location}
+                onChange={handleEditChange}
+                placeholder={text.location || "Location"}
+                className="w-full rounded-xl border border-gray-200 px-4 py-3"
+              />
+              <textarea
+                name="description"
+                value={editForm.description}
+                onChange={handleEditChange}
+                placeholder={text.description || "Description"}
+                rows="4"
+                className="sm:col-span-2 w-full rounded-xl border border-gray-200 px-4 py-3"
+              />
+
+              <div className="sm:col-span-2 flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={closeEditModal}
+                  className="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-700"
+                  disabled={savingProduct}
+                >
+                  {text.cancel || "Cancel"}
+                </button>
+                <button
+                  type="submit"
+                  className="rounded-xl bg-green-600 px-5 py-2.5 text-sm font-semibold text-white disabled:bg-green-300"
+                  disabled={savingProduct}
+                >
+                  {savingProduct ? (text.saving || "Saving...") : (text.save || "Save")}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
