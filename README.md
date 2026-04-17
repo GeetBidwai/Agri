@@ -1,6 +1,6 @@
 # Agri
 
-Agri is a full-stack agricultural marketplace app built with a React frontend and a Django REST backend. It supports listing discovery, buyer-seller role flow, bidding, contact reveal, seller verification surfaces, bilingual UI, and suspicious listing reporting.
+Agri is a full-stack agricultural marketplace app built with a React frontend and a Django REST backend. It supports listing discovery, buyer-seller role flow, bidding, contact reveal, seller verification surfaces, dashboard/profile management, bilingual UI, and suspicious listing reporting.
 
 ## Stack
 
@@ -23,6 +23,7 @@ Agri is a full-stack agricultural marketplace app built with a React frontend an
 - Let authenticated users reveal seller contact details
 - Let users place bids and view bids
 - Let authenticated users report suspicious listings
+- Show a live profile page and seller dashboard backed by the authenticated user profile
 - Support Hindi / English UI toggling
 
 ## What We Changed In This Project
@@ -34,6 +35,7 @@ Agri is a full-stack agricultural marketplace app built with a React frontend an
 - Protected contact reveal behind authentication
 - Protected product bid posting behind authentication and switched bid modal to the authenticated bid endpoint
 - Added listing reporting with duplicate-report protection
+- Refreshed the live profile and seller dashboard surfaces without changing the existing API flow
 - Tightened development CORS settings and made `SECRET_KEY` / `DEBUG` environment-aware
 - Fixed broken Hindi and icon rendering issues in the affected frontend components
 
@@ -43,7 +45,9 @@ Agri is a full-stack agricultural marketplace app built with a React frontend an
 Agri/
 |-- backend/
 |   |-- core/
+|   |-- media/
 |   |-- products/
+|   |-- db.sqlite3
 |   `-- manage.py
 |-- frontend/
 |   |-- public/
@@ -127,6 +131,7 @@ The frontend usually runs at `http://127.0.0.1:5173/`.
 - Authentication uses DRF token auth
 - Tokens are currently stored in browser local storage
 - The app uses hash-based navigation instead of React Router
+- The root `.gitignore` excludes local media uploads, virtual environments, and frontend build artifacts
 
 ## Useful Commands
 
@@ -182,6 +187,8 @@ python manage.py test
 - djangorestframework
 - django-cors-headers
 - Pillow
+
+`requirements.txt` is already up to date with the current backend packages and pinned versions used by this project.
 
 ## Status
 
