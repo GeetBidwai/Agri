@@ -1,5 +1,6 @@
 from django.db import IntegrityError
 from django.db.models import Q
+from django.db import transaction
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
@@ -228,8 +229,52 @@ def get_user_bids(request):
     for bid in bids:
         bid_data = BidSerializer(bid).data
         bid_data['product_name'] = bid.product.name
+        bid_data['product_id'] = bid.product_id
         data.append(bid_data)
     return Response(data)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+@authentication_classes([TokenAuthentication])
+def decide_bid(request, product_id, bid_id):
+    product = get_object_or_404(Product, pk=product_id)
+    bid = get_object_or_404(Bid, pk=bid_id, product=product)
+
+    if product.user_id != request.user.id:
+        return Response(
+            {"detail": "You can only manage bids for your own products."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    action = str(request.data.get("action", "")).strip().lower()
+    if action not in {"accept", "reject"}:
+        return Response(
+            {"detail": "Invalid action."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if bid.status != "pending":
+        return Response(
+            {"detail": f"This bid has already been {bid.status}."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    with transaction.atomic():
+        if action == "accept":
+            bid.status = "accepted"
+            bid.save(update_fields=["status"])
+
+            Bid.objects.filter(product=product, status="pending").exclude(pk=bid.pk).update(status="rejected")
+
+            if product.status != "sold":
+                product.status = "sold"
+                product.save(update_fields=["status"])
+        else:
+            bid.status = "rejected"
+            bid.save(update_fields=["status"])
+
+    return Response(BidSerializer(bid).data, status=status.HTTP_200_OK)
 
 
 @api_view(['GET', 'POST'])

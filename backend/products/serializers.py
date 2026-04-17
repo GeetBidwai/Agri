@@ -134,9 +134,10 @@ class BidSerializer(serializers.ModelSerializer):
             'buyer_phone',
             'bid_price',
             'quantity',
+            'status',
             'created_at'
         ]
-        read_only_fields = ['created_at']
+        read_only_fields = ['status', 'created_at']
 
 
 class SellerVerificationSerializer(serializers.ModelSerializer):

@@ -6,7 +6,7 @@ import Hero from "./components/Hero";
 import CategoryGrid from "./components/CategoryGrid";
 import LatestListings from "./components/LatestListings";
 import HowItWorks from "./components/HowItWorks";
-import AppBanner from "./components/AppBanner";
+import Footer from "./components/Footer";
 import CreateListing from "./components/CreateListing";
 import AuthPage from "./components/AuthPage";
 import ContactsPage from "./components/ContactsPage";
@@ -438,7 +438,6 @@ function App() {
             language={language}
           />
           <HowItWorks language={language} />
-          <AppBanner language={language} />
         </>
       )}
 
@@ -449,6 +448,7 @@ function App() {
           language={language}
         />
       )}
+      <Footer />
     </div>
   );
 }

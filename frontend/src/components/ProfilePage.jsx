@@ -53,6 +53,7 @@ function ProfilePage({ language, dashboardMode = false }) {
   const [selectedImagePreviews, setSelectedImagePreviews] = useState([]);
   const [savingProduct, setSavingProduct] = useState(false);
   const [deletingProductId, setDeletingProductId] = useState(null);
+  const [processingBidId, setProcessingBidId] = useState(null);
 
   const text = language === "HI"
     ? {
@@ -100,6 +101,10 @@ function ProfilePage({ language, dashboardMode = false }) {
         price: "Price",
         status: "Status",
         offered: "Offered",
+        acceptedBid: "Accepted",
+        rejectedBid: "Rejected",
+        bidUpdated: "Offer updated successfully.",
+        bidUpdateError: "Unable to update this offer right now.",
         actions: "Actions",
         productUpdated: "Product updated successfully.",
         productDeleted: "Product deleted successfully.",
@@ -305,6 +310,37 @@ function ProfilePage({ language, dashboardMode = false }) {
     }
   };
 
+  const handleBidDecision = async (bid, action) => {
+    if (!bid?.id || !bid?.product_id) {
+      return;
+    }
+
+    setProcessingBidId(bid.id);
+
+    try {
+      const response = await api.post(`/products/${bid.product_id}/bids/${bid.id}/decision/`, { action });
+
+      setUserBids((current) => current.map((item) => {
+        if (item.id === bid.id) {
+          return { ...item, ...response.data };
+        }
+
+        if (action === "accept" && item.product_id === bid.product_id && item.status === "pending") {
+          return { ...item, status: "rejected" };
+        }
+
+        return item;
+      }));
+
+      alert(text.bidUpdated || "Offer updated successfully.");
+    } catch (err) {
+      console.error(`Failed to ${action} bid:`, err);
+      alert(err.response?.data?.detail || text.bidUpdateError || "Unable to update this offer right now.");
+    } finally {
+      setProcessingBidId(null);
+    }
+  };
+
   const currentGallery = selectedImagePreviews.length > 0
     ? selectedImagePreviews
     : getProductImages(editingProduct);
@@ -444,11 +480,30 @@ function ProfilePage({ language, dashboardMode = false }) {
                               <p className="text-lg font-bold text-green-600">Rs {o.bid_price}/kg</p>
                             </div>
                           </div>
+                          {o.status && o.status !== "pending" && (
+                            <div className={`mb-4 inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                              o.status === "accepted"
+                                ? "bg-green-100 text-green-700"
+                                : "bg-gray-100 text-gray-600"
+                            }`}>
+                              {o.status === "accepted" ? (text.acceptedBid || "Accepted") : (text.rejectedBid || "Rejected")}
+                            </div>
+                          )}
                           <div className="flex gap-3">
-                            <button className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-xl font-semibold text-sm transition-colors">
+                            <button
+                              type="button"
+                              onClick={() => handleBidDecision(o, "accept")}
+                              disabled={o.status !== "pending" || processingBidId === o.id}
+                              className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-xl font-semibold text-sm transition-colors disabled:bg-green-300 disabled:cursor-not-allowed"
+                            >
                               {text.accept}
                             </button>
-                            <button className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-xl font-semibold text-sm transition-colors">
+                            <button
+                              type="button"
+                              onClick={() => handleBidDecision(o, "reject")}
+                              disabled={o.status !== "pending" || processingBidId === o.id}
+                              className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-xl font-semibold text-sm transition-colors disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+                            >
                               {text.reject}
                             </button>
                           </div>
