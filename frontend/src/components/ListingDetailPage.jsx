@@ -91,9 +91,13 @@ function ListingDetailPage({ listingId, onNavigate, onPlaceBid, language }) {
         setListing(listingRes.data);
         setBids(Array.isArray(bidsRes.data) ? bidsRes.data : []);
 
-        if (listingRes.data?.image) {
-          setSelectedImage(listingRes.data.image);
-        }
+        const nextImages = Array.isArray(listingRes.data?.images) && listingRes.data.images.length > 0
+          ? listingRes.data.images
+          : listingRes.data?.image
+            ? [listingRes.data.image]
+            : [];
+
+        setSelectedImage(nextImages[0] || "");
       } catch (error) {
         console.error("Failed to load listing detail:", error);
         if (isMounted) {
@@ -115,6 +119,10 @@ function ListingDetailPage({ listingId, onNavigate, onPlaceBid, language }) {
   }, [listingId]);
 
   const galleryImages = useMemo(() => {
+    if (Array.isArray(listing?.images) && listing.images.length > 0) {
+      return listing.images;
+    }
+
     if (!listing?.image || typeof listing.image !== "string") {
       return [];
     }

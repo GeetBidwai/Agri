@@ -8,6 +8,7 @@ class ProductSerializer(serializers.ModelSerializer):
     hindi_name = serializers.CharField(required=False, allow_blank=True)
     price = serializers.DecimalField(source="price_per_kg", max_digits=10, decimal_places=2, required=False)
     seller_verified = serializers.SerializerMethodField()
+    images = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -31,6 +32,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'contact_phone',
             'category',
             'image',
+            'images',
             'is_verified',
             'seller_verified',
             'created_at',
@@ -47,6 +49,20 @@ class ProductSerializer(serializers.ModelSerializer):
     def get_seller_verified(self, obj):
         profile = getattr(obj.user, "profile", None)
         return bool(getattr(profile, "is_verified", False))
+
+    def get_images(self, obj):
+        request = self.context.get("request")
+        gallery = []
+
+        related_manager = getattr(obj, "images", None)
+        if related_manager is not None:
+            for item in related_manager.all():
+                gallery.append(request.build_absolute_uri(item.image.url) if request else item.image.url)
+
+        if not gallery and obj.image:
+            gallery.append(request.build_absolute_uri(obj.image.url) if request else obj.image.url)
+
+        return gallery
 
     def _sync_legacy_fields(self, validated_data):
         product_name = validated_data.pop("product_name", None)
@@ -77,9 +93,9 @@ class ProductSerializer(serializers.ModelSerializer):
         data["product_name"] = instance.product_name or instance.name
         data["hindi_name"] = instance.hindi_name or instance.hindi
         data["contact_phone"] = instance.contact_phone or getattr(getattr(instance.user, "profile", None), "phone", "")
-        if instance.image:
-            request = self.context.get("request")
-            data["image"] = request.build_absolute_uri(instance.image.url) if request else instance.image.url
+        images = self.get_images(instance)
+        data["images"] = images
+        data["image"] = images[0] if images else None
         return data
 
 

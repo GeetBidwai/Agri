@@ -2,6 +2,18 @@ import { useEffect, useState } from "react";
 
 import api from "../api";
 
+const getProductImages = (product) => {
+  if (Array.isArray(product?.images) && product.images.length > 0) {
+    return product.images;
+  }
+
+  if (product?.image) {
+    return [product.image];
+  }
+
+  return [];
+};
+
 const createEditForm = (product) => ({
   product_name: product?.product_name || product?.name || "",
   hindi_name: product?.hindi_name || product?.hindi || "",
@@ -37,6 +49,8 @@ function ProfilePage({ language, dashboardMode = false }) {
   const [fetchingDashboard, setFetchingDashboard] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [editForm, setEditForm] = useState(() => createEditForm(null));
+  const [selectedImageFiles, setSelectedImageFiles] = useState([]);
+  const [selectedImagePreviews, setSelectedImagePreviews] = useState([]);
   const [savingProduct, setSavingProduct] = useState(false);
   const [deletingProductId, setDeletingProductId] = useState(null);
 
@@ -110,6 +124,8 @@ function ProfilePage({ language, dashboardMode = false }) {
         hindi: "Hindi Name",
         buy: "Buy",
         sell: "Sell",
+        image: "Product Images",
+        imageHelp: "Select new images only if you want to replace the current gallery.",
       };
 
   const dashboardTitle = language === "HI" ? "डैशबोर्ड" : "My Dashboard";
@@ -184,6 +200,8 @@ function ProfilePage({ language, dashboardMode = false }) {
   const openEditModal = (product) => {
     setEditingProduct(product);
     setEditForm(createEditForm(product));
+    setSelectedImageFiles([]);
+    setSelectedImagePreviews([]);
   };
 
   const closeEditModal = () => {
@@ -193,11 +211,19 @@ function ProfilePage({ language, dashboardMode = false }) {
 
     setEditingProduct(null);
     setEditForm(createEditForm(null));
+    setSelectedImageFiles([]);
+    setSelectedImagePreviews([]);
   };
 
   const handleEditChange = (event) => {
     const { name, value } = event.target;
     setEditForm((current) => ({ ...current, [name]: value }));
+  };
+
+  const handleEditImagesChange = (event) => {
+    const files = Array.from(event.target.files || []);
+    setSelectedImageFiles(files);
+    setSelectedImagePreviews(files.map((file) => URL.createObjectURL(file)));
   };
 
   const handleSaveProduct = async (event) => {
@@ -219,18 +245,31 @@ function ProfilePage({ language, dashboardMode = false }) {
     setSavingProduct(true);
 
     try {
-      const payload = {
-        ...editForm,
-        quantity: Number(editForm.quantity),
-        price_per_kg: editForm.price_per_kg,
-      };
-      const response = await api.put(`/products/${editingProduct.id}/`, payload);
+      const payload = new FormData();
+      payload.append("product_name", editForm.product_name);
+      payload.append("hindi_name", editForm.hindi_name);
+      payload.append("category", editForm.category);
+      payload.append("listing_type", editForm.listing_type);
+      payload.append("variety", editForm.variety);
+      payload.append("quantity", Number(editForm.quantity));
+      payload.append("price_per_kg", editForm.price_per_kg);
+      payload.append("location", editForm.location);
+      payload.append("description", editForm.description);
+      selectedImageFiles.forEach((file) => {
+        payload.append("images", file);
+      });
+
+      const response = await api.put(`/products/${editingProduct.id}/`, payload, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
 
       setUserProducts((current) => current.map((product) => (
         product.id === editingProduct.id ? response.data : product
       )));
       setEditingProduct(null);
       setEditForm(createEditForm(null));
+      setSelectedImageFiles([]);
+      setSelectedImagePreviews([]);
       alert(text.productUpdated || "Product updated successfully.");
     } catch (err) {
       console.error("Failed to update product:", err);
@@ -254,6 +293,8 @@ function ProfilePage({ language, dashboardMode = false }) {
       if (editingProduct?.id === productId) {
         setEditingProduct(null);
         setEditForm(createEditForm(null));
+        setSelectedImageFiles([]);
+        setSelectedImagePreviews([]);
       }
       alert(text.productDeleted || "Product deleted successfully.");
     } catch (err) {
@@ -263,6 +304,10 @@ function ProfilePage({ language, dashboardMode = false }) {
       setDeletingProductId(null);
     }
   };
+
+  const currentGallery = selectedImagePreviews.length > 0
+    ? selectedImagePreviews
+    : getProductImages(editingProduct);
 
   return (
     <section className="bg-gray-50 py-14 px-6 min-h-[calc(100vh-4rem)]">
@@ -423,8 +468,8 @@ function ProfilePage({ language, dashboardMode = false }) {
       </div>
 
       {editingProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 px-4 py-6">
-          <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-gray-900/40 px-4 py-6">
+          <div className="mx-auto w-full max-w-2xl max-h-[calc(100vh-3rem)] overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h3 className="text-2xl font-bold text-gray-900">{text.edit} {editingProduct.name}</h3>
@@ -512,6 +557,25 @@ function ProfilePage({ language, dashboardMode = false }) {
                 rows="4"
                 className="sm:col-span-2 w-full rounded-xl border border-gray-200 px-4 py-3"
               />
+              <div className="sm:col-span-2">
+                <input
+                  type="file"
+                  name="images"
+                  accept="image/*"
+                  multiple
+                  onChange={handleEditImagesChange}
+                  className="w-full rounded-xl border border-gray-200 px-4 py-3"
+                />
+                <p className="mt-2 text-xs text-gray-500">{text.imageHelp || "Select new images only if you want to replace the current gallery."}</p>
+              </div>
+
+              {currentGallery.length > 0 && (
+                <div className="sm:col-span-2 grid grid-cols-2 gap-3 rounded-xl border border-gray-100 p-3 sm:grid-cols-4">
+                  {currentGallery.map((image, index) => (
+                    <img key={`${image}-${index}`} src={image} alt={`${editForm.product_name || text.image} ${index + 1}`} className="aspect-square w-full rounded-lg object-cover" />
+                  ))}
+                </div>
+              )}
 
               <div className="sm:col-span-2 flex justify-end gap-3 pt-2">
                 <button
@@ -539,3 +603,5 @@ function ProfilePage({ language, dashboardMode = false }) {
 }
 
 export default ProfilePage;
+
+

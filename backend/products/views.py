@@ -7,9 +7,30 @@ from rest_framework import status
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 
-from .models import ListingReport, Product, Bid
+from .models import ListingReport, Product, ProductImage, Bid
 from .permissions import get_or_create_profile
 from .serializers import ProductSerializer, ProductContactSerializer, BidSerializer, ListingReportSerializer
+
+
+def sync_product_images(product, request):
+    uploaded_images = request.FILES.getlist("images")
+    if not uploaded_images:
+        single_image = request.FILES.get("image")
+        if single_image:
+            uploaded_images = [single_image]
+
+    if not uploaded_images:
+        return
+
+    for existing in product.images.all():
+        existing.image.delete(save=False)
+    product.images.all().delete()
+
+    product_images = [ProductImage(product=product, image=image) for image in uploaded_images]
+    ProductImage.objects.bulk_create(product_images)
+
+    product.image = uploaded_images[0]
+    product.save(update_fields=["image"])
 
 
 def perform_create(serializer, request):
@@ -28,11 +49,11 @@ def perform_create(serializer, request):
         hindi_name=hindi_name,
         hindi=hindi_name,
     )
+    sync_product_images(serializer.instance, request)
 
 
 @api_view(['GET', 'POST'])
 def get_products(request):
-    # GET -> fetch data
     if request.method == 'GET':
         search_query = request.GET.get('search', '').strip()
         listing_type = request.GET.get('type', '').strip().upper()
@@ -41,7 +62,6 @@ def get_products(request):
         max_price = request.GET.get('max_price', '').strip()
         products = Product.objects.all().order_by('-created_at')
 
-        # Optional search keeps the old response unchanged when query is empty
         if search_query:
             products = products.filter(
                 Q(name__icontains=search_query)
@@ -50,11 +70,9 @@ def get_products(request):
                 | Q(hindi_name__icontains=search_query)
             )
 
-        # Optional type filter keeps the old response unchanged when no filter is sent
         if listing_type in {'BUY', 'SELL'}:
             products = products.filter(listing_type=listing_type)
 
-        # Optional category filter
         if category_query:
             products = products.filter(category__iexact=category_query)
 
@@ -64,10 +82,9 @@ def get_products(request):
         if max_price:
             products = products.filter(price_per_kg__lte=max_price)
 
-        serializer = ProductSerializer(products, many=True, context={"request": request})
+        serializer = ProductSerializer(products.prefetch_related('images'), many=True, context={"request": request})
         return Response(serializer.data)
 
-    # POST -> create new product
     if request.method == 'POST':
         if not request.user or not request.user.is_authenticated:
             return Response(
@@ -85,7 +102,6 @@ def get_products(request):
         payload = request.data.copy()
         listing_type = payload.get('listing_type')
 
-        # Keep old and new fields in sync so existing UI logic continues to work
         if listing_type:
             payload['listing_type'] = str(listing_type).upper()
             payload['type'] = str(listing_type).lower()
@@ -127,7 +143,7 @@ def get_product_contact(request, product_id):
 
 @api_view(["GET", "PUT", "DELETE"])
 def product_detail(request, product_id):
-    product = get_object_or_404(Product, pk=product_id)
+    product = get_object_or_404(Product.objects.prefetch_related('images'), pk=product_id)
 
     if request.method == "GET":
         serializer = ProductSerializer(product, context={"request": request})
@@ -174,10 +190,13 @@ def product_detail(request, product_id):
     payload.pop("user", None)
     payload.pop("is_verified", None)
     payload.pop("created_at", None)
+    payload.pop("images", None)
 
     serializer = ProductSerializer(product, data=payload, partial=True, context={"request": request})
     if serializer.is_valid():
         serializer.save()
+        sync_product_images(serializer.instance, request)
+        serializer.instance.refresh_from_db()
         return Response(ProductSerializer(serializer.instance, context={"request": request}).data)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -205,7 +224,6 @@ def report_product(request, product_id):
 def get_user_bids(request):
     """Fetch all bids received for products owned by the current user."""
     bids = Bid.objects.filter(product__user=request.user).order_by('-created_at')
-    # Add product name to each bid for UI display
     data = []
     for bid in bids:
         bid_data = BidSerializer(bid).data

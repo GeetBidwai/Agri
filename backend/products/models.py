@@ -177,6 +177,22 @@ class Product(models.Model):
         return f"{self.name} ({self.listing_type})"
 
 
+class ProductImage(models.Model):
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name="images",
+    )
+    image = models.ImageField(upload_to="listings/")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at", "id"]
+
+    def __str__(self):
+        return f"Image for {self.product_id}"
+
+
 class ListingReport(models.Model):
     product = models.ForeignKey(
         Product,
@@ -211,3 +227,4 @@ class Bid(models.Model):
 
     def __str__(self):
         return f"{self.buyer_name} - {self.product.name}"
+

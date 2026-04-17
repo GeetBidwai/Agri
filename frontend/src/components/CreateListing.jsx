@@ -44,12 +44,12 @@ const createInitialForm = (initialListingType) => ({
   price_per_kg: "",
   location: "",
   description: "",
-  image: null,
+  images: [],
 });
 
 function CreateListing({ initialListingType = "SELL", setListings, refreshListings, language, user, onNavigate }) {
   const [form, setForm] = useState(() => createInitialForm(initialListingType));
-  const [imagePreview, setImagePreview] = useState(null);
+  const [imagePreviews, setImagePreviews] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const isVerified = Boolean(user?.is_verified);
@@ -99,7 +99,7 @@ function CreateListing({ initialListingType = "SELL", setListings, refreshListin
         price: "Price per kg",
         location: "Location",
         description: "Description",
-        image: "Product Image",
+        image: "Product Images",
         selectCategory: "Select Category",
         selectType: "Select Listing Type",
         submit: "Submit",
@@ -118,17 +118,10 @@ function CreateListing({ initialListingType = "SELL", setListings, refreshListin
   const handleChange = (e) => {
     const { name, value, files } = e.target;
 
-    if (name === "image") {
-      const file = files?.[0] || null;
-      setForm((current) => ({ ...current, image: file }));
-
-      if (file) {
-        const reader = new FileReader();
-        reader.onloadend = () => setImagePreview(reader.result);
-        reader.readAsDataURL(file);
-      } else {
-        setImagePreview(null);
-      }
+    if (name === "images") {
+      const nextFiles = Array.from(files || []);
+      setForm((current) => ({ ...current, images: nextFiles }));
+      setImagePreviews(nextFiles.map((file) => URL.createObjectURL(file)));
       return;
     }
 
@@ -163,9 +156,9 @@ function CreateListing({ initialListingType = "SELL", setListings, refreshListin
     formData.append("location", form.location);
     formData.append("description", form.description);
 
-    if (form.image) {
-      formData.append("image", form.image);
-    }
+    form.images.forEach((image) => {
+      formData.append("images", image);
+    });
 
     api.post("/listings/create/", formData, {
       headers: { "Content-Type": "multipart/form-data" },
@@ -180,7 +173,7 @@ function CreateListing({ initialListingType = "SELL", setListings, refreshListin
         }
 
         setForm(createInitialForm(initialListingType));
-        setImagePreview(null);
+        setImagePreviews([]);
         setLoading(false);
       })
       .catch((err) => {
@@ -310,15 +303,18 @@ function CreateListing({ initialListingType = "SELL", setListings, refreshListin
         />
         <input
           type="file"
-          name="image"
+          name="images"
           accept="image/*"
+          multiple
           onChange={handleChange}
           className="w-full p-2 border rounded"
         />
 
-        {imagePreview && (
-          <div className="overflow-hidden rounded border">
-            <img src={imagePreview} alt={form.product_name || text.image} className="w-full object-cover" />
+        {imagePreviews.length > 0 && (
+          <div className="grid grid-cols-2 gap-3 overflow-hidden rounded border p-3 sm:grid-cols-3">
+            {imagePreviews.map((preview, index) => (
+              <img key={`${preview}-${index}`} src={preview} alt={`${form.product_name || text.image} ${index + 1}`} className="aspect-square w-full rounded object-cover" />
+            ))}
           </div>
         )}
 
