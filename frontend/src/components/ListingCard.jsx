@@ -1,6 +1,6 @@
 import api from "../api";
 
-function ListingCard({ item, onNavigateToContact, onPlaceBid, onViewBids, language }) {
+function ListingCard({ item, onNavigateToContact, onNavigateToDetail, onPlaceBid, onViewBids, language }) {
   const listingType = item.listing_type || item.type?.toUpperCase();
   const isTrusted = item.seller_verified || item.is_verified || item.verified;
   const displayName = item.product_name || item.name;
@@ -72,18 +72,28 @@ function ListingCard({ item, onNavigateToContact, onPlaceBid, onViewBids, langua
       )}
 
       {item.image && typeof item.image === "string" && (
-        <div className="mt-4 aspect-video w-full overflow-hidden rounded-xl border border-gray-100">
+        <button
+          type="button"
+          onClick={() => onNavigateToDetail?.(item.id)}
+          className="mt-4 aspect-video w-full overflow-hidden rounded-xl border border-gray-100 block"
+        >
           <img
             src={item.image}
             alt={displayName}
             className="h-full w-full object-cover transition-transform hover:scale-105"
           />
-        </div>
+        </button>
       )}
 
-      <h3 className="mt-2 font-bold text-lg">
-        {displayName} <span className="text-gray-400 text-sm">{displayHindiName}</span>
-      </h3>
+      <button
+        type="button"
+        onClick={() => onNavigateToDetail?.(item.id)}
+        className="mt-2 text-left"
+      >
+        <h3 className="font-bold text-lg">
+          {displayName} <span className="text-gray-400 text-sm">{displayHindiName}</span>
+        </h3>
+      </button>
 
       <p className="text-sm text-gray-500">{item.variety}</p>
 

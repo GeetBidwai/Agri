@@ -3,9 +3,9 @@ import { useEffect, useRef, useState } from "react";
 function Navbar({
   isAuthenticated,
   username,
-  userRole,
   verificationStatus,
   onNavigate,
+  onCreateListing,
   onLogout,
   language,
   onToggleLanguage,
@@ -24,7 +24,7 @@ function Navbar({
       logout: "Logout",
       signIn: "Sign In",
       myProfile: "My Profile",
-      sellerDashboard: "Seller Dashboard",
+      myDashboard: "My Dashboard",
       verifyAccount: "Verify Account",
       verificationPending: "Verification Pending",
       verifiedSeller: "Verified Seller",
@@ -110,10 +110,10 @@ function Navbar({
           </button>
         )}
 
-        {userRole === "seller" && (
+        {isAuthenticated && (
           <button
             type="button"
-            onClick={() => onNavigate("create", "SELL")}
+            onClick={onCreateListing}
             className="border border-green-400 text-green-600 px-4 py-2 rounded-lg text-sm font-medium"
           >
             {text.postListing}
@@ -147,31 +147,27 @@ function Navbar({
                   {text.myProfile}
                 </button>
 
-                {userRole === "seller" && (
-                  <>
-                    <button
-                      type="button"
-                    onClick={() => {
-                        setMenuOpen(false);
-                        onNavigate("seller-dashboard");
-                      }}
-                      className="block w-full px-4 py-3 text-left text-sm hover:bg-gray-50"
-                    >
-                      {text.sellerDashboard}
-                    </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onNavigate("seller-dashboard");
+                  }}
+                  className="block w-full px-4 py-3 text-left text-sm hover:bg-gray-50"
+                >
+                  {text.myDashboard || "My Dashboard"}
+                </button>
 
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setMenuOpen(false);
-                        onNavigate("verify-account");
-                      }}
-                      className="block w-full px-4 py-3 text-left text-sm hover:bg-gray-50"
-                    >
-                      {verificationLabel}
-                    </button>
-                  </>
-                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onNavigate("verify-account");
+                  }}
+                  className="block w-full px-4 py-3 text-left text-sm hover:bg-gray-50"
+                >
+                  {verificationLabel}
+                </button>
 
                 <button
                   type="button"

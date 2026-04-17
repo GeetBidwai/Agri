@@ -3,18 +3,12 @@ from django.db import models
 
 
 class UserProfile(models.Model):
-    ROLE_CHOICES = [
-        ("buyer", "Buyer"),
-        ("seller", "Seller"),
-    ]
-
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="profile",
     )
     phone = models.CharField(max_length=20, blank=True)
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="buyer")
     is_verified = models.BooleanField(default=False)
     kyc_status = models.CharField(
         max_length=20,
@@ -29,7 +23,7 @@ class UserProfile(models.Model):
 
     @property
     def is_seller(self):
-        return self.role == "seller"
+        return bool(self.is_verified)
 
     def __str__(self):
         return f"{self.user.username} profile"
@@ -57,7 +51,6 @@ class SellerKYC(models.Model):
         UserProfile.objects.update_or_create(
             user=self.user,
             defaults={
-                "role": "seller",
                 "is_verified": self.status == "Verified",
                 "kyc_status": "verified" if self.status == "Verified" else "pending" if self.status == "Pending" else "rejected",
             },
@@ -103,7 +96,6 @@ class SellerVerification(models.Model):
             user=self.user,
             defaults={
                 "phone": getattr(getattr(self.user, "profile", None), "phone", ""),
-                "role": "seller",
                 "is_verified": self.is_verified or self.verification_status == "approved",
                 "kyc_status": "verified" if self.verification_status == "approved" else "pending" if self.verification_status == "pending" else "rejected",
             },

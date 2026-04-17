@@ -2,12 +2,26 @@ import { useState } from "react";
 
 import api from "../api";
 
+const normalizeAuthUser = (user) => {
+  if (!user) {
+    return null;
+  }
+
+  return {
+    id: user.id,
+    username: user.username,
+    phone: user.phone,
+    is_verified: Boolean(user.is_verified),
+    kyc_status: user.kyc_status,
+    listing_count: user.listing_count ?? 0,
+  };
+};
+
 function AuthPage({ mode, onAuthSuccess, onNavigate, language }) {
   const [form, setForm] = useState({
     username: "",
     password: "",
     phone: "",
-    role: "buyer",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -19,7 +33,7 @@ function AuthPage({ mode, onAuthSuccess, onNavigate, language }) {
       loginTitle: "Login to your account",
       signupTitle: "Create your account",
       loginSubtitle: "Sign in to create and manage your listings.",
-      signupSubtitle: "Sign up to start posting buy and sell listings.",
+      signupSubtitle: "Sign up to buy freely and complete verification before posting listings.",
       username: "Username",
       phone: "Phone Number",
       password: "Password",
@@ -30,9 +44,6 @@ function AuthPage({ mode, onAuthSuccess, onNavigate, language }) {
       already: "Already have an account?",
       createAccount: "Create an account",
       switchLogin: "Login",
-      role: "Role",
-      buyer: "Buyer",
-      seller: "Seller",
     },
     HI: {
       loginTitle: "अपने खाते में लॉगिन करें",
@@ -49,9 +60,6 @@ function AuthPage({ mode, onAuthSuccess, onNavigate, language }) {
       already: "क्या आपका खाता है?",
       createAccount: "खाता बनाएं",
       switchLogin: "लॉगिन",
-      role: "भूमिका",
-      buyer: "खरीदार",
-      seller: "विक्रेता",
     },
   };
 
@@ -70,8 +78,9 @@ function AuthPage({ mode, onAuthSuccess, onNavigate, language }) {
     api.post(`/auth/${isLogin ? "login" : "signup"}/`, form)
       .then((res) => {
         localStorage.setItem("authToken", res.data.token);
-        localStorage.setItem("authUser", JSON.stringify(res.data.user));
-        onAuthSuccess(res.data.user);
+        const nextUser = normalizeAuthUser(res.data.user);
+        localStorage.setItem("authUser", JSON.stringify(nextUser));
+        onAuthSuccess(nextUser);
       })
       .catch((err) => {
         setError(err.response?.data?.detail || "Something went wrong.");
@@ -95,13 +104,6 @@ function AuthPage({ mode, onAuthSuccess, onNavigate, language }) {
           {!isLogin && (
             <>
               <input name="phone" value={form.phone} placeholder={text.phone} onChange={handleChange} className="w-full p-3 border rounded-lg" />
-              <label className="block text-sm text-gray-600">
-                {text.role}
-                <select name="role" value={form.role} onChange={handleChange} className="mt-1 w-full p-3 border rounded-lg">
-                  <option value="buyer">{text.buyer}</option>
-                  <option value="seller">{text.seller}</option>
-                </select>
-              </label>
             </>
           )}
 

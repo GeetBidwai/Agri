@@ -52,7 +52,7 @@ function CreateListing({ initialListingType = "SELL", setListings, refreshListin
   const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const isVerified = user?.kyc_status === "verified";
+  const isVerified = Boolean(user?.is_verified);
 
   const suggestedHindi = useMemo(() => {
     const key = form.product_name.trim().toLowerCase();

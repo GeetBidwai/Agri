@@ -6,6 +6,7 @@ function LatestListings({
   activeListingType,
   setActiveListingType,
   onNavigateToContact,
+  onNavigateToDetail,
   onPlaceBid,
   onViewBids,
   language,
@@ -103,6 +104,7 @@ function LatestListings({
                 key={item.id}
                 item={item}
                 onNavigateToContact={onNavigateToContact}
+                onNavigateToDetail={onNavigateToDetail}
                 onPlaceBid={onPlaceBid}
                 onViewBids={onViewBids}
                 language={language}

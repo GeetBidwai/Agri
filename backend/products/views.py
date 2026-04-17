@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 
 from .models import ListingReport, Product, Bid
-from .permissions import get_or_create_profile, is_seller
+from .permissions import get_or_create_profile
 from .serializers import ProductSerializer, ProductContactSerializer, BidSerializer, ListingReportSerializer
 
 
@@ -74,17 +74,11 @@ def get_products(request):
                 {"detail": "Authentication credentials were not provided."},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
-        if not is_seller(request.user):
-            return Response(
-                {"detail": "Only sellers can create listings."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
 
-        # Check KYC verification status for sellers
-        profile = getattr(request.user, "profile", None)
-        if profile and profile.kyc_status != "verified":
+        profile, _ = get_or_create_profile(request.user)
+        if not profile.is_verified:
             return Response(
-                {"detail": "Please verify your account before performing this action."},
+                {"error": "Verification required to create listings"},
                 status=status.HTTP_403_FORBIDDEN,
             )
 

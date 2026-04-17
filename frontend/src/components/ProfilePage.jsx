@@ -2,7 +2,22 @@ import { useEffect, useState } from "react";
 
 import api from "../api";
 
-function ProfilePage({ language }) {
+const normalizeAuthUser = (user) => {
+  if (!user) {
+    return null;
+  }
+
+  return {
+    id: user.id,
+    username: user.username,
+    phone: user.phone,
+    is_verified: Boolean(user.is_verified),
+    kyc_status: user.kyc_status,
+    listing_count: user.listing_count ?? 0,
+  };
+};
+
+function ProfilePage({ language, dashboardMode = false }) {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [userProducts, setUserProducts] = useState([]);
@@ -11,19 +26,16 @@ function ProfilePage({ language }) {
 
   const text = language === "HI"
     ? {
-        title: "मेरी प्रोफ़ाइल",
+        title: "मेरी प्रोफाइल",
         subtitle: "अपने खाते की जानकारी देखें",
         username: "यूज़रनेम",
         phone: "फ़ोन नंबर",
         listings: "आपकी लिस्टिंग",
-        role: "भूमिका",
-        verified: "सत्यापित विक्रेता",
-        notVerified: "सत्यापित नहीं",
         kycStatus: "सत्यापन स्थिति",
-        not_started: "⚪ शुरू नहीं हुआ",
-        pending: "⏳ सत्यापन लंबित",
-        verified_status: "✅ सत्यापित विक्रेता",
-        rejected: "❌ सत्यापन अस्वीकृत",
+        not_started: "शुरू नहीं हुआ",
+        pending: "सत्यापन लंबित",
+        verified_status: "सत्यापित",
+        rejected: "सत्यापन अस्वीकृत",
         loading: "लोड हो रहा है...",
         unavailable: "उपलब्ध नहीं",
         myProducts: "मेरे उत्पाद",
@@ -34,7 +46,6 @@ function ProfilePage({ language }) {
         reject: "अस्वीकार करें",
         price: "कीमत",
         status: "स्थिति",
-        buyer: "खरीदार",
         offered: "प्रस्तावित",
       }
     : {
@@ -43,14 +54,11 @@ function ProfilePage({ language }) {
         username: "Username",
         phone: "Phone Number",
         listings: "Your Listings",
-        role: "Role",
-        verified: "Verified Seller",
-        notVerified: "Not verified",
         kycStatus: "Verification Status",
-        not_started: "⚪ Not Started",
-        pending: "⏳ Pending Verification",
-        verified_status: "✅ Verified Seller",
-        rejected: "❌ Verification Rejected",
+        not_started: "Not Started",
+        pending: "Pending Verification",
+        verified_status: "Verified",
+        rejected: "Verification Rejected",
         loading: "Loading...",
         unavailable: "Not available",
         myProducts: "My Products",
@@ -61,35 +69,33 @@ function ProfilePage({ language }) {
         reject: "Reject",
         price: "Price",
         status: "Status",
-        buyer: "Buyer",
         offered: "Offered",
       };
 
-  // Dummy data removed as real data is now being fetched from backend
-  
-  const localizedRole = profile?.role === "seller"
-    ? language === "HI" ? "विक्रेता" : "seller"
-    : profile?.role === "buyer"
-      ? language === "HI" ? "खरीदार" : "buyer"
-      : profile?.role || "buyer";
+  const dashboardTitle = language === "HI" ? "डैशबोर्ड" : "My Dashboard";
+  const dashboardSubtitle = language === "HI"
+    ? "अपनी लिस्टिंग और सत्यापन स्थिति प्रबंधित करें"
+    : "Manage your listings and verification status";
+  const verifyPromptTitle = language === "HI"
+    ? "लिस्टिंग पोस्ट करने के लिए खाता सत्यापित करें"
+    : "Complete verification to start selling";
+  const verifyPromptBody = language === "HI"
+    ? "आप खरीद, बिड और ब्राउज तुरंत कर सकते हैं. बिक्री शुरू करने के लिए सिर्फ सत्यापन पूरा करना है."
+    : "You can browse, buy, and place bids already. Finish verification here to unlock listing creation.";
+  const verifyNow = language === "HI" ? "अभी सत्यापित करें" : "Verify Now";
+
+  const canAccessSellerArea = Boolean(profile?.is_verified);
 
   const fetchProfile = () => {
     setLoading(true);
     api.get("/auth/me/")
       .then((res) => {
-        setProfile(res.data);
-        localStorage.setItem("authUser", JSON.stringify({
-          id: res.data.id,
-          username: res.data.username,
-          phone: res.data.phone,
-          role: res.data.role,
-          is_verified: res.data.is_verified,
-          kyc_status: res.data.kyc_status,
-        }));
-        
-        // If user is a seller, fetch dashboard data
-        if (res.data.role === "seller") {
-          fetchDashboardData();
+        const nextProfile = normalizeAuthUser(res.data);
+        setProfile(nextProfile);
+        localStorage.setItem("authUser", JSON.stringify(nextProfile));
+
+        if (dashboardMode && nextProfile?.is_verified) {
+          fetchDashboardData(nextProfile.username);
         }
       })
       .catch((err) => {
@@ -99,19 +105,13 @@ function ProfilePage({ language }) {
       .finally(() => setLoading(false));
   };
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = async (username) => {
     setFetchingDashboard(true);
     try {
-      // 1. Fetch products belonging to the current user
       const productsRes = await api.get("/products/");
-      // Filter for current user's products (matching username as seller)
-      // Note: In a real scenario, the backend should ideally provide a /products/me/ endpoint
-      // but here we filter on the frontend for safety as requested.
-      const authUser = JSON.parse(localStorage.getItem("authUser") || "{}");
-      const filteredProducts = productsRes.data.filter(p => p.seller === authUser.username);
+      const filteredProducts = productsRes.data.filter((p) => p.seller === username);
       setUserProducts(filteredProducts);
 
-      // 2. Fetch bids received for user's products
       const bidsRes = await api.get("/products/user-bids/");
       setUserBids(bidsRes.data);
     } catch (err) {
@@ -125,11 +125,27 @@ function ProfilePage({ language }) {
     fetchProfile();
   }, []);
 
+  const verificationLabel = profile?.kyc_status === "verified"
+    ? text.verified_status
+    : profile?.kyc_status === "pending"
+      ? text.pending
+      : profile?.kyc_status === "rejected"
+        ? text.rejected
+        : text.not_started;
+
+  const verificationColor = profile?.kyc_status === "verified"
+    ? "text-green-600"
+    : profile?.kyc_status === "pending"
+      ? "text-yellow-600"
+      : profile?.kyc_status === "rejected"
+        ? "text-red-600"
+        : "text-gray-500";
+
   return (
     <section className="bg-gray-50 py-14 px-6 min-h-[calc(100vh-4rem)]">
       <div className="max-w-3xl mx-auto rounded-2xl bg-white p-8 shadow">
-        <h2 className="text-3xl font-bold text-gray-900">{text.title}</h2>
-        <p className="mt-2 text-gray-600">{text.subtitle}</p>
+        <h2 className="text-3xl font-bold text-gray-900">{dashboardMode ? dashboardTitle : text.title}</h2>
+        <p className="mt-2 text-gray-600">{dashboardMode ? dashboardSubtitle : text.subtitle}</p>
 
         {loading ? (
           <p className="mt-6 text-gray-600">{text.loading}</p>
@@ -158,30 +174,31 @@ function ProfilePage({ language }) {
               </div>
 
               <div className="rounded-xl border border-gray-200 p-4">
-                <p className="text-sm text-gray-500">{text.role}</p>
-                <p className="mt-2 text-lg font-semibold text-gray-900">
-                  {localizedRole}
+                <p className="text-sm text-gray-500">{text.kycStatus}</p>
+                <p className={`mt-2 text-lg font-semibold ${verificationColor}`}>
+                  {verificationLabel}
                 </p>
-                <div className="mt-2">
-                  <p className="text-xs text-gray-500 uppercase tracking-wider">{text.kycStatus}</p>
-                  <p className={`text-xs font-bold mt-1 ${
-                    profile?.kyc_status === "verified" ? "text-green-600" :
-                    profile?.kyc_status === "pending" ? "text-yellow-600" :
-                    profile?.kyc_status === "rejected" ? "text-red-600" :
-                    "text-gray-400"
-                  }`}>
-                    {profile?.kyc_status === "verified" ? text.verified_status :
-                     profile?.kyc_status === "pending" ? text.pending :
-                     profile?.kyc_status === "rejected" ? text.rejected :
-                     text.not_started}
-                  </p>
-                </div>
               </div>
             </div>
 
-            {profile?.role === "seller" && (
+            {dashboardMode && !canAccessSellerArea && (
+              <div className="mt-12 rounded-2xl border border-amber-200 bg-amber-50 p-6">
+                <h3 className="text-xl font-bold text-gray-900">{verifyPromptTitle}</h3>
+                <p className="mt-2 text-sm text-gray-700">{verifyPromptBody}</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.location.hash = "#/verify-account";
+                  }}
+                  className="mt-4 rounded-xl bg-green-600 px-5 py-2 text-sm font-semibold text-white"
+                >
+                  {verifyNow}
+                </button>
+              </div>
+            )}
+
+            {dashboardMode && canAccessSellerArea && (
               <div className="mt-12 space-y-12">
-                {/* My Products Section */}
                 <section>
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-2xl font-bold text-gray-900">{text.myProducts}</h3>
@@ -202,7 +219,7 @@ function ProfilePage({ language }) {
                             userProducts.map((p) => (
                               <tr key={p.id} className="hover:bg-gray-50/50 transition-colors">
                                 <td className="px-6 py-4 font-medium text-gray-900">{p.name}</td>
-                                <td className="px-6 py-4 text-green-600 font-semibold">₹{p.price_per_kg}/kg</td>
+                                <td className="px-6 py-4 text-green-600 font-semibold">Rs {p.price_per_kg}/kg</td>
                                 <td className="px-6 py-4">
                                   <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
                                     p.verified ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
@@ -229,7 +246,6 @@ function ProfilePage({ language }) {
                   </div>
                 </section>
 
-                {/* Incoming Offers Section */}
                 <section>
                   <h3 className="text-2xl font-bold text-gray-900 mb-6">{text.incomingOffers}</h3>
                   <div className="grid gap-6 sm:grid-cols-2">
@@ -243,7 +259,7 @@ function ProfilePage({ language }) {
                             </div>
                             <div className="text-right">
                               <p className="text-xs text-gray-500 uppercase">{text.offered}</p>
-                              <p className="text-lg font-bold text-green-600">₹{o.bid_price}/kg</p>
+                              <p className="text-lg font-bold text-green-600">Rs {o.bid_price}/kg</p>
                             </div>
                           </div>
                           <div className="flex gap-3">

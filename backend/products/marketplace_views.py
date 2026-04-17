@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 
 from .models import Bid, Product, SellerKYC
-from .permissions import get_or_create_profile, is_seller
+from .permissions import get_or_create_profile
 from .serializers import BidSerializer, ProductSerializer, SellerKYCSerializer
 from .views import perform_create
 
@@ -34,12 +34,6 @@ def _apply_listing_filters(request, queryset):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def upload_kyc(request):
-    if not is_seller(request.user):
-        return Response(
-            {"detail": "Only sellers can access KYC."},
-            status=status.HTTP_403_FORBIDDEN,
-        )
-
     serializer = SellerKYCSerializer(data=request.data, context={"request": request})
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -51,12 +45,6 @@ def upload_kyc(request):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def kyc_status(request):
-    if not is_seller(request.user):
-        return Response(
-            {"detail": "Only sellers can access KYC."},
-            status=status.HTTP_403_FORBIDDEN,
-        )
-
     kyc = SellerKYC.objects.filter(user=request.user).order_by("-created_at").first()
     if not kyc:
         return Response({"submitted": False, "status": "Not Submitted", "is_verified": False})
@@ -74,9 +62,10 @@ def kyc_status(request):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def create_listing(request):
-    if not is_seller(request.user):
+    profile, _ = get_or_create_profile(request.user)
+    if not profile.is_verified:
         return Response(
-            {"detail": "Only sellers can create listings."},
+            {"error": "Verification required to create listings"},
             status=status.HTTP_403_FORBIDDEN,
         )
 

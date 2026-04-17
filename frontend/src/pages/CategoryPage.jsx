@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import api from "../api";
 import ListingCard from "../components/ListingCard";
 
-function CategoryPage({ categoryName, onNavigateToContact, onPlaceBid, language }) {
+function CategoryPage({ categoryName, onNavigateToContact, onNavigateToDetail, onPlaceBid, language }) {
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -63,6 +63,7 @@ function CategoryPage({ categoryName, onNavigateToContact, onPlaceBid, language 
                 key={index}
                 item={item}
                 onNavigateToContact={onNavigateToContact}
+                onNavigateToDetail={onNavigateToDetail}
                 onPlaceBid={onPlaceBid}
                 language={language}
               />

@@ -4,19 +4,13 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .models import SellerVerification
+from .permissions import get_or_create_profile
 from .serializers import SellerVerificationSerializer
-from .permissions import is_seller
 
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def verify_seller(request):
-    if not is_seller(request.user):
-        return Response(
-            {"detail": "Only sellers can access seller verification."},
-            status=status.HTTP_403_FORBIDDEN,
-        )
-
     existing = SellerVerification.objects.filter(user=request.user).order_by("-created_at").first()
     serializer = SellerVerificationSerializer(data=request.data, context={"request": request})
 
@@ -35,11 +29,9 @@ def verify_seller(request):
         is_verified=False,
     )
 
-    # Explicitly update the user's kyc_status to "pending" on the profile
-    profile = getattr(request.user, "profile", None)
-    if profile:
-        profile.kyc_status = "pending"
-        profile.save(update_fields=["kyc_status"])
+    profile, _ = get_or_create_profile(request.user)
+    profile.kyc_status = "pending"
+    profile.save(update_fields=["kyc_status"])
 
     return Response(
         SellerVerificationSerializer(verification, context={"request": request}).data,
@@ -50,12 +42,6 @@ def verify_seller(request):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def verification_status(request):
-    if not is_seller(request.user):
-        return Response(
-            {"detail": "Only sellers can access seller verification."},
-            status=status.HTTP_403_FORBIDDEN,
-        )
-
     verification = SellerVerification.objects.filter(user=request.user).order_by("-created_at").first()
 
     if not verification:

@@ -19,10 +19,6 @@ def signup(request):
     username = request.data.get("username", "").strip()
     password = request.data.get("password", "")
     phone = request.data.get("phone", "").strip()
-    role = request.data.get("role", "buyer")
-    role = role.strip().lower() if isinstance(role, str) else "buyer"
-    if role not in {"buyer", "seller"}:
-        role = "buyer"
 
     if not username or not password or not phone:
         return Response(
@@ -37,7 +33,7 @@ def signup(request):
         )
 
     user = User.objects.create_user(username=username, password=password)
-    UserProfile.objects.create(user=user, phone=phone, role=role)
+    UserProfile.objects.create(user=user, phone=phone)
     token, _ = Token.objects.get_or_create(user=user)
 
     return Response(
@@ -47,7 +43,6 @@ def signup(request):
                 "id": user.id,
                 "username": user.username,
                 "phone": phone,
-                "role": role,
                 "is_verified": False,
                 "kyc_status": "not_started",
             },
@@ -79,7 +74,6 @@ def login(request):
                 "id": user.id,
                 "username": user.username,
                 "phone": profile.phone,
-                "role": profile.role,
                 "is_verified": profile.is_verified,
                 "kyc_status": profile.kyc_status,
             },
@@ -97,7 +91,6 @@ def me(request):
             "id": request.user.id,
             "username": request.user.username,
             "phone": profile.phone,
-            "role": profile.role,
             "is_verified": profile.is_verified,
             "kyc_status": profile.kyc_status,
             "listing_count": Product.objects.filter(user=request.user).count(),

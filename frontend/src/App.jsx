@@ -12,10 +12,26 @@ import AuthPage from "./components/AuthPage";
 import ContactsPage from "./components/ContactsPage";
 import ProfilePage from "./components/ProfilePage";
 import VerifyAccount from "./components/VerifyAccount";
+import ListingDetailPage from "./components/ListingDetailPage";
 import MandiPrices from "./pages/MandiPrices";
 import BidModal from "./components/BidModal";
 import ProductBidsPage from "./pages/ProductBidsPage";
 import CategoryPage from "./pages/CategoryPage";
+
+const normalizeAuthUser = (user) => {
+  if (!user) {
+    return null;
+  }
+
+  return {
+    id: user.id,
+    username: user.username,
+    phone: user.phone,
+    is_verified: Boolean(user.is_verified),
+    kyc_status: user.kyc_status,
+    listing_count: user.listing_count ?? 0,
+  };
+};
 
 const getRouteFromHash = () => {
   const hash = window.location.hash || "#/";
@@ -62,6 +78,13 @@ const getRouteFromHash = () => {
     };
   }
 
+  if (hash.startsWith("#/listing/")) {
+    return {
+      page: "listing",
+      listingId: hash.replace("#/listing/", ""),
+    };
+  }
+
   if (hash === "#/create" || hash === "#/create/sell") {
     return { page: "create", listingType: "SELL" };
   }
@@ -96,7 +119,7 @@ function App() {
   const [language, setLanguage] = useState(() => localStorage.getItem("siteLanguage") || "EN");
   const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem("authUser");
-    return savedUser ? JSON.parse(savedUser) : null;
+    return savedUser ? normalizeAuthUser(JSON.parse(savedUser)) : null;
   });
   const [verificationStatus, setVerificationStatus] = useState("not_submitted");
 
@@ -131,6 +154,11 @@ function App() {
 
     if (nextRoute === "product-bids") {
       window.location.hash = `#/product-bids/${value}`;
+      return;
+    }
+
+    if (nextRoute === "listing") {
+      window.location.hash = `#/listing/${value}`;
       return;
     }
 
@@ -173,16 +201,14 @@ function App() {
           return null;
         }
       })();
-      const sellerOnlyPages = new Set(["create", "seller-dashboard", "kyc", "verify-account"]);
-
       // Protect authenticated routes without adding a router dependency
       if ((nextRoute.page === "create" || nextRoute.page === "profile" || nextRoute.page === "seller-dashboard" || nextRoute.page === "kyc" || nextRoute.page === "verify-account") && !token) {
         window.location.hash = "#/login";
         return;
       }
 
-      if (sellerOnlyPages.has(nextRoute.page) && currentUser?.role !== "seller") {
-        window.location.hash = "#/";
+      if (nextRoute.page === "create" && !currentUser?.is_verified) {
+        window.location.hash = "#/verify-account";
         return;
       }
 
@@ -222,11 +248,6 @@ function App() {
       return;
     }
 
-    if (user?.role !== "seller") {
-      setVerificationStatus("not_submitted");
-      return;
-    }
-
     api.get("/verification-status/")
       .then((res) => {
         setVerificationStatus(res.data.verification_status || "not_submitted");
@@ -237,6 +258,21 @@ function App() {
       });
   }, [isAuthenticated, user?.id]);
 
+  const handleCreateListingClick = () => {
+    if (!isAuthenticated) {
+      navigate("login");
+      return;
+    }
+
+    if (!user?.is_verified) {
+      alert("Complete verification to start selling");
+      navigate("verify-account");
+      return;
+    }
+
+    navigate("create", "SELL");
+  };
+
   useEffect(() => {
     if (!isAuthenticated) {
       return;
@@ -244,14 +280,7 @@ function App() {
 
     api.get("/auth/me/")
       .then((res) => {
-        const nextUser = {
-          id: res.data.id,
-          username: res.data.username,
-          phone: res.data.phone,
-          role: res.data.role,
-          is_verified: res.data.is_verified,
-          kyc_status: res.data.kyc_status,
-        };
+        const nextUser = normalizeAuthUser(res.data);
         setUser(nextUser);
         localStorage.setItem("authUser", JSON.stringify(nextUser));
       })
@@ -261,8 +290,9 @@ function App() {
   }, [isAuthenticated]);
 
   const handleAuthSuccess = (nextUser) => {
-    setUser(nextUser);
-    navigate(nextUser?.role === "seller" ? "seller-dashboard" : "home");
+    const normalizedUser = normalizeAuthUser(nextUser);
+    setUser(normalizedUser);
+    navigate(normalizedUser?.is_verified ? "seller-dashboard" : "home");
   };
 
   const handleLogout = () => {
@@ -287,9 +317,9 @@ function App() {
       <Navbar
         isAuthenticated={isAuthenticated}
         username={user?.username}
-        userRole={user?.role}
         verificationStatus={verificationStatus}
         onNavigate={navigate}
+        onCreateListing={handleCreateListingClick}
         onLogout={handleLogout}
         language={language}
         onToggleLanguage={() => setLanguage((prev) => (prev === "EN" ? "HI" : "EN"))}
@@ -334,7 +364,7 @@ function App() {
       )}
 
       {route.page === "seller-dashboard" && (
-        <ProfilePage language={language} showSellerKyc />
+        <ProfilePage language={language} dashboardMode />
       )}
 
       {route.page === "kyc" && (
@@ -356,6 +386,16 @@ function App() {
         <CategoryPage
           categoryName={route.categoryName}
           onNavigateToContact={(productId) => navigate("contacts", productId)}
+          onNavigateToDetail={(productId) => navigate("listing", productId)}
+          onPlaceBid={handlePlaceBid}
+          language={language}
+        />
+      )}
+
+      {route.page === "listing" && (
+        <ListingDetailPage
+          listingId={route.listingId}
+          onNavigate={navigate}
           onPlaceBid={handlePlaceBid}
           language={language}
         />
@@ -392,6 +432,7 @@ function App() {
             activeListingType={activeListingType}
             setActiveListingType={setActiveListingType}
             onNavigateToContact={(productId) => navigate("contacts", productId)}
+            onNavigateToDetail={(productId) => navigate("listing", productId)}
             onPlaceBid={handlePlaceBid}
             onViewBids={(productId) => navigate("product-bids", productId)}
             language={language}
