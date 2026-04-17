@@ -1,133 +1,241 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-const dummyData = [
-  { commodity: "Wheat", market: "Pune", state: "Maharashtra", min_price: 2100, max_price: 2400, modal_price: 2250 },
-  { commodity: "Rice", market: "Nagpur", state: "Maharashtra", min_price: 3000, max_price: 3500, modal_price: 3200 },
-  { commodity: "Onion", market: "Nashik", state: "Maharashtra", min_price: 1200, max_price: 1800, modal_price: 1500 },
-  { commodity: "Potato", market: "Indore", state: "Madhya Pradesh", min_price: 1000, max_price: 1400, modal_price: 1200 }
-];
+import api from "../api";
 
-const MandiPrices = ({ language }) => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filteredData, setFilteredData] = useState(dummyData);
+const formatDate = (value) => {
+  if (!value) {
+    return "-";
+  }
 
-  const copy = {
-    EN: {
-      title: "Mandi Prices",
-      subtitle: "Daily update of commodity prices across Indian markets",
-      placeholder: "Search commodity (e.g. Wheat)",
-      search: "Search",
-      noData: "No data found",
-      commodity: "Commodity",
-      market: "Market",
-      state: "State",
-      minPrice: "Min Price",
-      maxPrice: "Max Price",
-      modalPrice: "Modal Price",
-    },
-    HI: {
-      title: "मंडी भाव",
-      subtitle: "भारतीय बाजारों में जिन्सों की कीमतों का दैनिक अपडेट",
-      placeholder: "जिन्स खोजें (जैसे गेहूं)",
-      search: "खोजें",
-      noData: "कोई डेटा नहीं मिला",
-      commodity: "जिन्स",
-      market: "मंडी",
-      state: "राज्य",
-      minPrice: "न्यूनतम मूल्य",
-      maxPrice: "अधिकतम मूल्य",
-      modalPrice: "औसत मूल्य",
-    },
-  };
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return "-";
+  }
 
-  const text = copy[language || "EN"];
+  return parsed.toLocaleDateString();
+};
+
+const formatPrice = (value) => {
+  if (value === null || value === undefined || value === "") {
+    return "-";
+  }
+
+  return `\u20b9${value}/kg`;
+};
+
+function MandiPrices({ language }) {
+  const [products, setProducts] = useState([]);
+  const [selectedCommodity, setSelectedCommodity] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState("");
+  const [visibleProducts, setVisibleProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const text = language === "HI"
+    ? {
+        title: "\u092e\u0902\u0921\u0940 \u092d\u093e\u0935",
+        subtitle: "\u0921\u0947\u091f\u093e\u092c\u0947\u0938 \u0938\u0947 \u0909\u0924\u094d\u092a\u093e\u0926 \u0915\u0940 \u0935\u093e\u0938\u094d\u0924\u0935\u093f\u0915 \u0915\u0940\u092e\u0924\u0947\u0902 \u0926\u0947\u0916\u0947\u0902",
+        commodity: "\u091c\u093f\u0902\u0938",
+        allCommodities: "\u0938\u092d\u0940 \u091c\u093f\u0902\u0938",
+        locationFilter: "\u0938\u094d\u0925\u093e\u0928 \u091a\u0941\u0928\u0947\u0902",
+        allLocations: "\u0938\u092d\u0940 \u0938\u094d\u0925\u093e\u0928",
+        search: "\u0916\u094b\u091c\u0947\u0902",
+        loading: "\u0921\u0947\u091f\u093e \u0932\u094b\u0921 \u0939\u094b \u0930\u0939\u093e \u0939\u0948...",
+        error: "\u0921\u0947\u091f\u093e \u0932\u094b\u0921 \u0928\u0939\u0940\u0902 \u0939\u094b \u092a\u093e\u092f\u093e",
+        noData: "No data available",
+        variety: "\u0915\u093f\u0938\u094d\u092e",
+        location: "\u0938\u094d\u0925\u093e\u0928",
+        quantity: "\u092e\u093e\u0924\u094d\u0930\u093e",
+        price: "\u092e\u0942\u0932\u094d\u092f (\u20b9/kg)",
+        date: "\u0924\u093e\u0930\u0940\u0916",
+      }
+    : {
+        title: "Mandi Prices",
+        subtitle: "View real product prices from your marketplace database",
+        commodity: "Select Commodity",
+        allCommodities: "All Commodities",
+        locationFilter: "Select Location",
+        allLocations: "All Locations",
+        search: "Search",
+        loading: "Loading data...",
+        error: "Unable to load data right now.",
+        noData: "No data available",
+        variety: "Variety",
+        location: "Location",
+        quantity: "Quantity",
+        price: "Price (\u20b9/kg)",
+        date: "Date",
+      };
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchProducts = async () => {
+      setLoading(true);
+      setError("");
+
+      try {
+        const response = await api.get("/products/");
+        const nextProducts = Array.isArray(response.data) ? response.data : [];
+
+        if (!isMounted) {
+          return;
+        }
+
+        setProducts(nextProducts);
+        setVisibleProducts(nextProducts);
+      } catch (err) {
+        console.error("Failed to load mandi prices:", err);
+        if (isMounted) {
+          setProducts([]);
+          setVisibleProducts([]);
+          setError(text.error || "Unable to load data right now.");
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchProducts();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [text.error]);
+
+  const commodityOptions = useMemo(() => {
+    const uniqueNames = new Set();
+
+    products.forEach((product) => {
+      const name = (product?.product_name || product?.name || "").trim();
+      if (name) {
+        uniqueNames.add(name);
+      }
+    });
+
+    return Array.from(uniqueNames).sort((left, right) => left.localeCompare(right));
+  }, [products]);
+
+  const locationOptions = useMemo(() => {
+    const uniqueLocations = new Set();
+
+    products.forEach((product) => {
+      const location = (product?.location || "").trim();
+      if (location) {
+        uniqueLocations.add(location);
+      }
+    });
+
+    return Array.from(uniqueLocations).sort((left, right) => left.localeCompare(right));
+  }, [products]);
 
   const handleSearch = () => {
-    const results = dummyData.filter(item =>
-      item.commodity.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredData(results);
-  };
+    const filteredProducts = products.filter((product) => {
+      const matchesCommodity = !selectedCommodity || (product?.product_name || product?.name || "") === selectedCommodity;
+      const matchesLocation = !selectedLocation || (product?.location || "") === selectedLocation;
+      return matchesCommodity && matchesLocation;
+    });
 
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter") {
-      handleSearch();
-    }
+    setVisibleProducts(filteredProducts);
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen py-10 px-4 md:px-8">
-      <div className="max-w-6xl mx-auto">
-        <div className="mb-8 text-center md:text-left">
-          <h1 className="text-3xl font-bold text-green-800 mb-2">{text.title}</h1>
-          <p className="text-gray-600">{text.subtitle}</p>
+    <section className="min-h-[calc(100vh-4rem)] bg-gray-50 px-4 py-10 md:px-8">
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-green-800">{text.title}</h1>
+          <p className="mt-2 text-gray-600">{text.subtitle}</p>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder={text.placeholder}
-                className="w-full pl-4 pr-10 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
-              />
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
+        <div className="mb-8 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+          <div className="flex flex-col gap-4 md:flex-row md:items-end">
+            <div className="flex-1">
+              <label className="mb-2 block text-sm font-semibold text-gray-700">{text.commodity}</label>
+              <select
+                value={selectedCommodity}
+                onChange={(event) => setSelectedCommodity(event.target.value)}
+                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-gray-800 outline-none transition focus:border-green-500 focus:ring-2 focus:ring-green-100"
+              >
+                <option value="">{text.allCommodities}</option>
+                {commodityOptions.map((commodity) => (
+                  <option key={commodity} value={commodity}>
+                    {commodity}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex-1">
+              <label className="mb-2 block text-sm font-semibold text-gray-700">{text.locationFilter}</label>
+              <select
+                value={selectedLocation}
+                onChange={(event) => setSelectedLocation(event.target.value)}
+                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-gray-800 outline-none transition focus:border-green-500 focus:ring-2 focus:ring-green-100"
+              >
+                <option value="">{text.allLocations}</option>
+                {locationOptions.map((location) => (
+                  <option key={location} value={location}>
+                    {location}
+                  </option>
+                ))}
+              </select>
             </div>
             <button
+              type="button"
               onClick={handleSearch}
-              className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2"
+              className="rounded-xl bg-green-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-green-700"
             >
-              <span>{text.search}</span>
+              {text.search}
             </button>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-green-50 text-green-800 uppercase text-xs font-bold tracking-wider">
-                  <th className="px-6 py-4">{text.commodity}</th>
-                  <th className="px-6 py-4">{text.market}</th>
-                  <th className="px-6 py-4">{text.state}</th>
-                  <th className="px-6 py-4 text-right">{text.minPrice}</th>
-                  <th className="px-6 py-4 text-right">{text.maxPrice}</th>
-                  <th className="px-6 py-4 text-right">{text.modalPrice}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {filteredData.length > 0 ? (
-                  filteredData.map((item, index) => (
-                    <tr key={index} className="hover:bg-green-50/30 transition-colors">
-                      <td className="px-6 py-4 font-semibold text-gray-800">{item.commodity}</td>
-                      <td className="px-6 py-4 text-gray-600">{item.market}</td>
-                      <td className="px-6 py-4 text-gray-600">{item.state}</td>
-                      <td className="px-6 py-4 text-right text-green-600 font-medium">₹{item.min_price}</td>
-                      <td className="px-6 py-4 text-right text-amber-600 font-medium">₹{item.max_price}</td>
-                      <td className="px-6 py-4 text-right text-green-800 font-bold">₹{item.modal_price}</td>
-                    </tr>
-                  ))
-                ) : (
+        <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+          {loading ? (
+            <div className="px-6 py-12 text-center text-gray-500">{text.loading}</div>
+          ) : error ? (
+            <div className="px-6 py-12 text-center text-red-500">{error}</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-left">
+                <thead className="bg-green-50 text-xs font-bold uppercase tracking-wide text-green-800">
                   <tr>
-                    <td colSpan="6" className="px-6 py-12 text-center text-gray-500 italic">
-                      {text.noData}
-                    </td>
+                    <th className="px-6 py-4">{text.commodity}</th>
+                    <th className="px-6 py-4">{text.variety}</th>
+                    <th className="px-6 py-4">{text.location}</th>
+                    <th className="px-6 py-4">{text.quantity}</th>
+                    <th className="px-6 py-4">{text.price}</th>
+                    <th className="px-6 py-4">{text.date}</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {visibleProducts.length > 0 ? (
+                    visibleProducts.map((product) => (
+                      <tr key={product.id} className="transition-colors hover:bg-green-50/40">
+                        <td className="px-6 py-4 font-semibold text-gray-900">{product.product_name || product.name || "-"}</td>
+                        <td className="px-6 py-4 text-gray-600">{product.variety || "-"}</td>
+                        <td className="px-6 py-4 text-gray-600">{product.location || "-"}</td>
+                        <td className="px-6 py-4 text-gray-600">{product.quantity ?? "-"}</td>
+                        <td className="px-6 py-4 font-medium text-green-700">{formatPrice(product.price_per_kg ?? product.price)}</td>
+                        <td className="px-6 py-4 text-gray-600">{formatDate(product.created_at)}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="6" className="px-6 py-12 text-center text-gray-500 italic">
+                        {text.noData}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
-    </div>
+    </section>
   );
-};
+}
 
 export default MandiPrices;
