@@ -142,7 +142,7 @@ def get_product_contact(request, product_id):
     return Response(serializer.data)
 
 
-@api_view(["GET", "PUT", "DELETE"])
+@api_view(["GET", "PUT", "PATCH", "DELETE"])
 def product_detail(request, product_id):
     product = get_object_or_404(Product.objects.prefetch_related('images'), pk=product_id)
 
@@ -193,7 +193,12 @@ def product_detail(request, product_id):
     payload.pop("created_at", None)
     payload.pop("images", None)
 
-    serializer = ProductSerializer(product, data=payload, partial=True, context={"request": request})
+    serializer = ProductSerializer(
+        product,
+        data=payload,
+        partial=request.method == "PATCH",
+        context={"request": request},
+    )
     if serializer.is_valid():
         serializer.save()
         sync_product_images(serializer.instance, request)

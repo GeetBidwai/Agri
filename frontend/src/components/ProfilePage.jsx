@@ -2,28 +2,9 @@ import { useEffect, useState } from "react";
 
 import api from "../api";
 
-const getProductImages = (product) => {
-  if (Array.isArray(product?.images) && product.images.length > 0) {
-    return product.images;
-  }
-
-  if (product?.image) {
-    return [product.image];
-  }
-
-  return [];
-};
-
 const createEditForm = (product) => ({
   product_name: product?.product_name || product?.name || "",
-  hindi_name: product?.hindi_name || product?.hindi || "",
-  category: product?.category || "",
-  listing_type: product?.listing_type || "SELL",
-  variety: product?.variety || "",
-  quantity: product?.quantity ?? "",
   price_per_kg: product?.price_per_kg ?? "",
-  location: product?.location || "",
-  description: product?.description || "",
 });
 
 const normalizeAuthUser = (user) => {
@@ -49,8 +30,7 @@ function ProfilePage({ language, dashboardMode = false, showSellerKyc = false })
   const [fetchingDashboard, setFetchingDashboard] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [editForm, setEditForm] = useState(() => createEditForm(null));
-  const [selectedImageFiles, setSelectedImageFiles] = useState([]);
-  const [selectedImagePreviews, setSelectedImagePreviews] = useState([]);
+  const [editErrorMessage, setEditErrorMessage] = useState("");
   const [savingProduct, setSavingProduct] = useState(false);
   const [deletingProductId, setDeletingProductId] = useState(null);
   const [processingBidId, setProcessingBidId] = useState(null);
@@ -108,10 +88,10 @@ function ProfilePage({ language, dashboardMode = false, showSellerKyc = false })
         actions: "Actions",
         productUpdated: "Product updated successfully.",
         productDeleted: "Product deleted successfully.",
-        editValidation: "Please fill product name, quantity, price, category, listing type, and location.",
+        editValidation: "Please fill product name and price.",
         editError: "Unable to update this product right now.",
         deleteError: "Unable to delete this product right now.",
-        deleteConfirm: "Delete this product? This action cannot be undone.",
+        deleteConfirm: "Are you sure you want to delete this product?",
         cancel: "Cancel",
         save: "Save",
         saving: "Saving...",
@@ -270,8 +250,7 @@ function ProfilePage({ language, dashboardMode = false, showSellerKyc = false })
   const openEditModal = (product) => {
     setEditingProduct(product);
     setEditForm(createEditForm(product));
-    setSelectedImageFiles([]);
-    setSelectedImagePreviews([]);
+    setEditErrorMessage("");
   };
 
   const closeEditModal = () => {
@@ -281,19 +260,12 @@ function ProfilePage({ language, dashboardMode = false, showSellerKyc = false })
 
     setEditingProduct(null);
     setEditForm(createEditForm(null));
-    setSelectedImageFiles([]);
-    setSelectedImagePreviews([]);
+    setEditErrorMessage("");
   };
 
   const handleEditChange = (event) => {
     const { name, value } = event.target;
     setEditForm((current) => ({ ...current, [name]: value }));
-  };
-
-  const handleEditImagesChange = (event) => {
-    const files = Array.from(event.target.files || []);
-    setSelectedImageFiles(files);
-    setSelectedImagePreviews(files.map((file) => URL.createObjectURL(file)));
   };
 
   const handleSaveProduct = async (event) => {
@@ -302,55 +274,41 @@ function ProfilePage({ language, dashboardMode = false, showSellerKyc = false })
     if (
       !editingProduct ||
       !editForm.product_name.trim() ||
-      !String(editForm.quantity).trim() ||
-      !String(editForm.price_per_kg).trim() ||
-      !editForm.category.trim() ||
-      !editForm.listing_type.trim() ||
-      !editForm.location.trim()
+      !String(editForm.price_per_kg).trim()
     ) {
-      alert(text.editValidation || "Please fill product name, quantity, price, category, listing type, and location.");
+      setEditErrorMessage(text.editValidation || "Please fill product name and price.");
       return;
     }
 
     setSavingProduct(true);
+    setEditErrorMessage("");
 
     try {
-      const payload = new FormData();
-      payload.append("product_name", editForm.product_name);
-      payload.append("hindi_name", editForm.hindi_name);
-      payload.append("category", editForm.category);
-      payload.append("listing_type", editForm.listing_type);
-      payload.append("variety", editForm.variety);
-      payload.append("quantity", Number(editForm.quantity));
-      payload.append("price_per_kg", editForm.price_per_kg);
-      payload.append("location", editForm.location);
-      payload.append("description", editForm.description);
-      selectedImageFiles.forEach((file) => {
-        payload.append("images", file);
-      });
-
-      const response = await api.put(`/products/${editingProduct.id}/`, payload, {
-        headers: { "Content-Type": "multipart/form-data" },
+      const response = await api.patch(`/products/${editingProduct.id}/`, {
+        product_name: editForm.product_name.trim(),
+        price_per_kg: editForm.price_per_kg,
       });
 
       setUserProducts((current) => current.map((product) => (
         product.id === editingProduct.id ? response.data : product
       )));
-      setEditingProduct(null);
-      setEditForm(createEditForm(null));
-      setSelectedImageFiles([]);
-      setSelectedImagePreviews([]);
+      closeEditModal();
       alert(text.productUpdated || "Product updated successfully.");
     } catch (err) {
       console.error("Failed to update product:", err);
-      alert(err.response?.data?.detail || text.editError || "Unable to update this product right now.");
+      const nextError = err.response?.data?.detail
+        || err.response?.data?.product_name?.[0]
+        || err.response?.data?.price_per_kg?.[0]
+        || text.editError
+        || "Unable to update this product right now.";
+      setEditErrorMessage(nextError);
     } finally {
       setSavingProduct(false);
     }
   };
 
   const handleDeleteProduct = async (productId) => {
-    if (!window.confirm(text.deleteConfirm || "Delete this product? This action cannot be undone.")) {
+    if (!window.confirm(text.deleteConfirm || "Are you sure you want to delete this product?")) {
       return;
     }
 
@@ -363,8 +321,7 @@ function ProfilePage({ language, dashboardMode = false, showSellerKyc = false })
       if (editingProduct?.id === productId) {
         setEditingProduct(null);
         setEditForm(createEditForm(null));
-        setSelectedImageFiles([]);
-        setSelectedImagePreviews([]);
+        setEditErrorMessage("");
       }
       alert(text.productDeleted || "Product deleted successfully.");
     } catch (err) {
@@ -405,10 +362,6 @@ function ProfilePage({ language, dashboardMode = false, showSellerKyc = false })
       setProcessingBidId(null);
     }
   };
-
-  const currentGallery = selectedImagePreviews.length > 0
-    ? selectedImagePreviews
-    : getProductImages(editingProduct);
 
   return (
     <section className="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-emerald-50 via-white to-gray-50 px-6 py-10">
@@ -779,50 +732,16 @@ function ProfilePage({ language, dashboardMode = false, showSellerKyc = false })
             </div>
 
             <form onSubmit={handleSaveProduct} className="mt-6 grid gap-4 sm:grid-cols-2">
+              {editErrorMessage && (
+                <div className="sm:col-span-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  {editErrorMessage}
+                </div>
+              )}
               <input
                 name="product_name"
                 value={editForm.product_name}
                 onChange={handleEditChange}
                 placeholder={text.name || "Product Name"}
-                className="w-full rounded-xl border border-gray-200 px-4 py-3"
-              />
-              <input
-                name="hindi_name"
-                value={editForm.hindi_name}
-                onChange={handleEditChange}
-                placeholder={text.hindi || "Hindi Name"}
-                className="w-full rounded-xl border border-gray-200 px-4 py-3"
-              />
-              <select
-                name="listing_type"
-                value={editForm.listing_type}
-                onChange={handleEditChange}
-                className="w-full rounded-xl border border-gray-200 px-4 py-3"
-              >
-                <option value="SELL">{text.sell || "Sell"}</option>
-                <option value="BUY">{text.buy || "Buy"}</option>
-              </select>
-              <input
-                name="category"
-                value={editForm.category}
-                onChange={handleEditChange}
-                placeholder={text.category || "Category"}
-                className="w-full rounded-xl border border-gray-200 px-4 py-3"
-              />
-              <input
-                name="variety"
-                value={editForm.variety}
-                onChange={handleEditChange}
-                placeholder={text.variety || "Variety"}
-                className="w-full rounded-xl border border-gray-200 px-4 py-3"
-              />
-              <input
-                type="number"
-                min="1"
-                name="quantity"
-                value={editForm.quantity}
-                onChange={handleEditChange}
-                placeholder={text.quantity || "Quantity"}
                 className="w-full rounded-xl border border-gray-200 px-4 py-3"
               />
               <input
@@ -835,40 +754,6 @@ function ProfilePage({ language, dashboardMode = false, showSellerKyc = false })
                 placeholder={text.price || "Price"}
                 className="w-full rounded-xl border border-gray-200 px-4 py-3"
               />
-              <input
-                name="location"
-                value={editForm.location}
-                onChange={handleEditChange}
-                placeholder={text.location || "Location"}
-                className="w-full rounded-xl border border-gray-200 px-4 py-3"
-              />
-              <textarea
-                name="description"
-                value={editForm.description}
-                onChange={handleEditChange}
-                placeholder={text.description || "Description"}
-                rows="4"
-                className="sm:col-span-2 w-full rounded-xl border border-gray-200 px-4 py-3"
-              />
-              <div className="sm:col-span-2">
-                <input
-                  type="file"
-                  name="images"
-                  accept="image/*"
-                  multiple
-                  onChange={handleEditImagesChange}
-                  className="w-full rounded-xl border border-gray-200 px-4 py-3"
-                />
-                <p className="mt-2 text-xs text-gray-500">{text.imageHelp || "Select new images only if you want to replace the current gallery."}</p>
-              </div>
-
-              {currentGallery.length > 0 && (
-                <div className="sm:col-span-2 grid grid-cols-2 gap-3 rounded-xl border border-gray-100 p-3 sm:grid-cols-4">
-                  {currentGallery.map((image, index) => (
-                    <img key={`${image}-${index}`} src={image} alt={`${editForm.product_name || text.image} ${index + 1}`} className="aspect-square w-full rounded-lg object-cover" />
-                  ))}
-                </div>
-              )}
 
               <div className="sm:col-span-2 flex justify-end gap-3 pt-2">
                 <button
